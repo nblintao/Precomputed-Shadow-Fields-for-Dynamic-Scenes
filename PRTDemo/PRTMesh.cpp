@@ -877,7 +877,21 @@ void CPRTMesh::RenderWithPRT( IDirect3DDevice9* pd3dDevice, D3DXMATRIX* pmWorldV
     HRESULT hr;
     UINT iPass, cPasses;
 
-    m_pPRTEffect->SetMatrix( "g_mWorldViewProjection", pmWorldViewProj );
+    D3DXMATRIX matWorld;//世界变换矩阵
+    D3DXMATRIX matTranlate, matRotation, matScale;//变换矩阵，旋转矩阵，缩放矩阵
+    D3DXMatrixScaling(&matScale, 1.0f, 1.0f, 5.0);//在Z轴上放大5倍
+    FLOAT fAngle = 60 * (2.0f*D3DX_PI) / 360.0f;//计算需要旋转的角度
+    D3DXMatrixRotationY(&matRotation, fAngle);//绕Y轴旋转60度
+    D3DXMatrixMultiply(&matTranlate, &matScale, &matRotation);//组合两个矩阵
+    D3DXMatrixTranslation(&matTranlate, 30.0f, 0.0f, 0.0f);//沿X平移30个单位
+    D3DXMatrixMultiply(&matWorld, &matWorld, &matTranlate);//组合得到世界变幻矩阵
+
+    D3DXMATRIX mWorldViewProjNew;
+    D3DXMatrixMultiply(&mWorldViewProjNew, &matScale, pmWorldViewProj);//组合得到世界变幻矩阵
+
+
+    m_pPRTEffect->SetMatrix("g_mWorldViewProjection", &mWorldViewProjNew);
+    //m_pPRTEffect->SetMatrix("g_mWorldViewProjection", pmWorldViewProj);
 
     bool bHasAlbedoTexture = false;
     for( int i = 0; i < m_pAlbedoTextures.GetSize(); i++ )
