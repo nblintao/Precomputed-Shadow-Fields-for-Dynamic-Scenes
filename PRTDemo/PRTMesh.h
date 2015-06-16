@@ -84,6 +84,7 @@ public:
     void    ComputeShaderConstants( float* pSHCoeffsRed, float* pSHCoeffsGreen, float* pSHCoeffsBlue,
                                     DWORD dwNumCoeffsPerChannel );
     void    RenderWithPRT( IDirect3DDevice9* pd3dDevice, D3DXMATRIX* pmWorldViewProj, bool bRenderWithAlbedoTexture );
+    void    DoRenderWithPRT(IDirect3DDevice9* pd3dDevice, D3DXMATRIX* pmWorldViewProj, bool bRenderWithAlbedoTexture);
     HRESULT SavePRTBufferToFile( WCHAR* strFile );
     HRESULT SaveCompPRTBufferToFile( WCHAR* strFile );
 
@@ -191,4 +192,7 @@ protected:
     D3DXHANDLE m_hValidLDPRTTechnique;
     D3DXHANDLE m_hValidLDPRTTechniqueWithTex;
     IDirect3DCubeTexture9* m_pSHBasisTextures[9];  // Store SH basis functions using textures
+
+    ID3DXMesh* meshTeapot;
+    ID3DXMesh* meshSphere;
 };

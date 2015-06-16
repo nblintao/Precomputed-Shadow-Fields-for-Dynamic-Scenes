@@ -49,6 +49,8 @@ CPRTMesh::~CPRTMesh( void )
     SAFE_RELEASE( m_pPRTBuffer );
     SAFE_RELEASE( m_pPRTCompBuffer );
     SAFE_RELEASE( m_pLDPRTMesh );
+    SAFE_RELEASE(meshTeapot);
+    SAFE_RELEASE(meshSphere);
 }
 
 
@@ -183,6 +185,23 @@ HRESULT CPRTMesh::LoadMesh( IDirect3DDevice9* pd3dDevice, WCHAR* strMeshFileName
 {
     WCHAR str[MAX_PATH];
     HRESULT hr;
+
+    SAFE_RELEASE(meshTeapot);
+    D3DXCreateTeapot(
+        pd3dDevice, //D3D绘制对象  
+        &meshTeapot,
+        0 //通常设置成0(或NULL)  
+        );
+
+    SAFE_RELEASE(meshSphere);
+    D3DXCreateSphere(
+        pd3dDevice, //D3D绘制对象  
+        1.0f, //球面体半径  
+        100, //用几条经线绘制  
+        100, //用几条维线绘制  
+        &meshSphere,
+        0 //通常设置成0(或NULL)  
+        );
 
     // Release any previous mesh object
     SAFE_RELEASE( m_pMesh );
@@ -872,26 +891,45 @@ void CPRTMesh::ComputeShaderConstants( float* pSHCoeffsRed, float* pSHCoeffsGree
 
 
 //--------------------------------------------------------------------------------------
-void CPRTMesh::RenderWithPRT( IDirect3DDevice9* pd3dDevice, D3DXMATRIX* pmWorldViewProj, bool bRenderWithAlbedo )
+void CPRTMesh::RenderWithPRT(IDirect3DDevice9* pd3dDevice, D3DXMATRIX* pmWorldViewProj, bool bRenderWithAlbedo)
+{
+    D3DMATRIX tempWorld;
+    pd3dDevice->GetTransform(D3DTS_WORLD, &tempWorld);
+
+    D3DXMATRIX sphereWorld;
+    FLOAT radius = 5.0f;
+    D3DXMatrixScaling(&sphereWorld, radius, radius, radius);
+    D3DXMatrixMultiply(&sphereWorld, &sphereWorld, pmWorldViewProj);
+    pd3dDevice->SetTransform(D3DTS_WORLD, &sphereWorld);
+    meshSphere->DrawSubset(0);
+
+    pd3dDevice->SetTransform(D3DTS_WORLD, &tempWorld);
+    
+    for (int i = 0; i < 2; i++) {
+
+        D3DXMATRIX matWorld;//世界变换矩阵
+        D3DXMATRIX matTranlate, matRotation, matScale;//变换矩阵，旋转矩阵，缩放矩阵
+        //D3DXMatrixScaling(&matScale, 1.0f, 1.0f, 5.0);//在Z轴上放大5倍
+        //FLOAT fAngle = 60 * (2.0f*D3DX_PI) / 360.0f;//计算需要旋转的角度
+        //D3DXMatrixRotationY(&matRotation, fAngle);//绕Y轴旋转60度
+        //D3DXMatrixMultiply(&matTranlate, &matScale, &matRotation);//组合两个矩阵
+        D3DXMatrixTranslation(&matTranlate, 0.0f, 5.0f*i, 0.0f);//沿X平移30个单位
+        //D3DXMatrixMultiply(&matWorld, &matWorld, &matTranlate);//组合得到世界变幻矩阵
+
+        D3DXMATRIX mWorldViewProjNew;
+        D3DXMatrixMultiply(&mWorldViewProjNew, &matTranlate, pmWorldViewProj);//组合得到世界变幻矩阵
+
+        DoRenderWithPRT(pd3dDevice, &mWorldViewProjNew, bRenderWithAlbedo);
+    }
+}
+
+//--------------------------------------------------------------------------------------
+void CPRTMesh::DoRenderWithPRT( IDirect3DDevice9* pd3dDevice, D3DXMATRIX* pmWorldViewProj, bool bRenderWithAlbedo )
 {
     HRESULT hr;
     UINT iPass, cPasses;
 
-    D3DXMATRIX matWorld;//世界变换矩阵
-    D3DXMATRIX matTranlate, matRotation, matScale;//变换矩阵，旋转矩阵，缩放矩阵
-    D3DXMatrixScaling(&matScale, 1.0f, 1.0f, 5.0);//在Z轴上放大5倍
-    FLOAT fAngle = 60 * (2.0f*D3DX_PI) / 360.0f;//计算需要旋转的角度
-    D3DXMatrixRotationY(&matRotation, fAngle);//绕Y轴旋转60度
-    D3DXMatrixMultiply(&matTranlate, &matScale, &matRotation);//组合两个矩阵
-    D3DXMatrixTranslation(&matTranlate, 30.0f, 0.0f, 0.0f);//沿X平移30个单位
-    D3DXMatrixMultiply(&matWorld, &matWorld, &matTranlate);//组合得到世界变幻矩阵
-
-    D3DXMATRIX mWorldViewProjNew;
-    D3DXMatrixMultiply(&mWorldViewProjNew, &matScale, pmWorldViewProj);//组合得到世界变幻矩阵
-
-
-    m_pPRTEffect->SetMatrix("g_mWorldViewProjection", &mWorldViewProjNew);
-    //m_pPRTEffect->SetMatrix("g_mWorldViewProjection", pmWorldViewProj);
+    m_pPRTEffect->SetMatrix("g_mWorldViewProjection", pmWorldViewProj);
 
     bool bHasAlbedoTexture = false;
     for( int i = 0; i < m_pAlbedoTextures.GetSize(); i++ )
@@ -949,6 +987,7 @@ void CPRTMesh::RenderWithPRT( IDirect3DDevice9* pd3dDevice, D3DXMATRIX* pmWorldV
     }
 
     V( m_pPRTEffect->End() );
+    
 }
 
 
@@ -1527,6 +1566,8 @@ void CPRTMesh::OnDestroyDevice()
     SAFE_RELEASE( m_pNDotLEffect );
     SAFE_RELEASE( m_pLDPRTMesh );
     SAFE_RELEASE( m_pLDPRTEffect );
+    SAFE_RELEASE(meshTeapot);
+    SAFE_RELEASE(meshSphere);
 
     delete[] m_pLDPRTShadingNormals;
     m_pLDPRTShadingNormals = NULL;
