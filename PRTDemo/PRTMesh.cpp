@@ -175,6 +175,334 @@ HRESULT AttribSortMesh( ID3DXMesh** ppInOutMesh )
     return S_OK;
 }
 
+VOID SetupLights(IDirect3DDevice9* g_pd3dDevice)
+{
+    // Set up a material. The material here just has the diffuse and ambient
+    // colors set to yellow. Note that only one material can be used at a time.
+    D3DMATERIAL9 mtrl;
+    ZeroMemory(&mtrl, sizeof(D3DMATERIAL9));
+    mtrl.Diffuse.r = mtrl.Ambient.r = 1.0f;
+    mtrl.Diffuse.g = mtrl.Ambient.g = 1.0f;
+    mtrl.Diffuse.b = mtrl.Ambient.b = 0.0f;
+    mtrl.Diffuse.a = mtrl.Ambient.a = 1.0f;
+    g_pd3dDevice->SetMaterial(&mtrl);
+
+    // Set up a white, directional light, with an oscillating direction.
+    // Note that many lights may be active at a time (but each one slows down
+    // the rendering of our scene). However, here we are just using one. Also,
+    // we need to set the D3DRS_LIGHTING renderstate to enable lighting
+    //D3DXVECTOR3 vecDir;
+    //D3DLIGHT9 light;
+    //ZeroMemory(&light, sizeof(D3DLIGHT9));
+    //light.Type = D3DLIGHT_DIRECTIONAL;
+    //light.Diffuse.r = 1.0f;
+    //light.Diffuse.g = 1.0f;
+    //light.Diffuse.b = 1.0f;
+    //vecDir = D3DXVECTOR3(cosf(timeGetTime() / 350.0f),
+    //    1.0f,
+    //    sinf(timeGetTime() / 350.0f));
+    //D3DXVec3Normalize((D3DXVECTOR3*)&light.Direction, &vecDir);
+    //light.Range = 1000.0f;
+    //g_pd3dDevice->SetLight(0, &light);
+    //g_pd3dDevice->LightEnable(0, TRUE);
+    //g_pd3dDevice->SetRenderState(D3DRS_LIGHTING, TRUE);
+
+    // Finally, turn on some ambient light.
+    g_pd3dDevice->SetRenderState(D3DRS_AMBIENT, D3DCOLOR_XRGB(255,255,255));
+}
+
+// Another way to render the cube map
+// Based on https://msdn.microsoft.com/en-us/library/windows/desktop/bb204871(v=vs.85).aspx
+//void RenderFaces(IDirect3DDevice9* d3dDevice, LPDIRECT3DCUBETEXTURE9 pCubeMap, ID3DXMesh* meshSphere)
+//{
+//    SetupLights(d3dDevice);
+//    // Save transformation matrices of the device
+//    D3DXMATRIX matProjSave, matViewSave;
+//    d3dDevice->GetTransform(D3DTS_VIEW, &matViewSave);
+//    d3dDevice->GetTransform(D3DTS_PROJECTION, &matProjSave);
+//
+//    // Store the current back buffer and z-buffer
+//    LPDIRECT3DSURFACE9 pBackBuffer, pZBuffer;
+//    d3dDevice->GetRenderTarget(0, &pBackBuffer);
+//    d3dDevice->GetDepthStencilSurface(&pZBuffer);
+//
+//    // Use 90-degree field of view in the projection
+//    D3DXMATRIX matProj;
+//    D3DXMatrixPerspectiveFovLH(&matProj, D3DX_PI / 2, 1.0f, 0.5f, 1000.0f);
+//    d3dDevice->SetTransform(D3DTS_PROJECTION, &matProj);
+//
+//    // Loop through the six faces of the cube map
+//    for (DWORD i = 0; i<6; i++) {
+//        // Standard view that will be overridden below
+//        D3DXVECTOR3 vEnvEyePt = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+//        D3DXVECTOR3 vLookatPt, vUpVec;
+//
+//        switch (i) {
+//            case D3DCUBEMAP_FACE_POSITIVE_X:
+//                vLookatPt = D3DXVECTOR3(1.0f, 0.0f, 0.0f);
+//                vUpVec = D3DXVECTOR3(0.0f, 1.0f, 0.0f);
+//                break;
+//            case D3DCUBEMAP_FACE_NEGATIVE_X:
+//                vLookatPt = D3DXVECTOR3(-1.0f, 0.0f, 0.0f);
+//                vUpVec = D3DXVECTOR3(0.0f, 1.0f, 0.0f);
+//                break;
+//            case D3DCUBEMAP_FACE_POSITIVE_Y:
+//                vLookatPt = D3DXVECTOR3(0.0f, 1.0f, 0.0f);
+//                vUpVec = D3DXVECTOR3(0.0f, 0.0f, -1.0f);
+//                break;
+//            case D3DCUBEMAP_FACE_NEGATIVE_Y:
+//                vLookatPt = D3DXVECTOR3(0.0f, -1.0f, 0.0f);
+//                vUpVec = D3DXVECTOR3(0.0f, 0.0f, 1.0f);
+//                break;
+//            case D3DCUBEMAP_FACE_POSITIVE_Z:
+//                vLookatPt = D3DXVECTOR3(0.0f, 0.0f, 1.0f);
+//                vUpVec = D3DXVECTOR3(0.0f, 1.0f, 0.0f);
+//                break;
+//            case D3DCUBEMAP_FACE_NEGATIVE_Z:
+//                vLookatPt = D3DXVECTOR3(0.0f, 0.0f, -1.0f);
+//                vUpVec = D3DXVECTOR3(0.0f, 1.0f, 0.0f);
+//                break;
+//        }
+//
+//        D3DXMATRIX matView;
+//        D3DXMatrixLookAtLH(&matView, &vEnvEyePt, &vLookatPt, &vUpVec);
+//        d3dDevice->SetTransform(D3DTS_VIEW, &matView);
+//
+//        // Get pointer to surface in order to render to it
+//        LPDIRECT3DSURFACE9 pFace;
+//        pCubeMap->GetCubeMapSurface((D3DCUBEMAP_FACES)i, 0, &pFace);
+//        //d3dDevice->SetRenderTarget(0, pFace, pZBuffer);
+//        d3dDevice->SetRenderTarget(0, pFace);
+//
+//        D3DMATRIX tempWorld;
+//        d3dDevice->GetTransform(D3DTS_WORLD, &tempWorld);
+//        D3DXMATRIX m1,m2;
+//        FLOAT radius = 1.0f;
+//        D3DXMatrixScaling(&m1, radius, radius, radius);
+//        D3DXMatrixTranslation(&m2, 0, 2, 0);
+//        D3DXMatrixMultiply(&m2, &m1, &m2);
+//        d3dDevice->SetTransform(D3DTS_WORLD, &m2);
+//
+//        d3dDevice->BeginScene();
+//
+//        // Render scene here
+//        meshSphere->DrawSubset(0);//        
+//
+//        d3dDevice->EndScene();
+//
+//        d3dDevice->SetTransform(D3DTS_WORLD, &tempWorld);
+//
+//    }
+//
+//    // Change the render target back to the main back buffer.
+//    //d3dDevice->SetRenderTarget(0, pBackBuffer, pZBuffer);
+//    d3dDevice->SetRenderTarget(0, pBackBuffer);
+//    SAFE_RELEASE(pBackBuffer);
+//    SAFE_RELEASE(pZBuffer);
+//
+//    // Restore the original transformation matrices
+//    d3dDevice->SetTransform(D3DTS_VIEW, &matViewSave);
+//    d3dDevice->SetTransform(D3DTS_PROJECTION, &matProjSave);
+//
+//    D3DXSaveTextureToFile(L"D:\\hello.bmp", D3DXIFF_BMP, pCubeMap, NULL);
+//
+//
+//}
+
+void RenderSceneIntoCubeMap(IDirect3DDevice9 *pd3dDevice, LPDIRECT3DCUBETEXTURE9 m_pCubeMap, ID3DXMesh* meshSphere)
+{
+    HRESULT hr;
+
+    D3DXMATRIXA16 oView, oProj;
+    pd3dDevice->GetTransform(D3DTS_VIEW, &oView);
+    pd3dDevice->GetTransform(D3DTS_PROJECTION, &oProj);
+
+    // Cubemap使用的投影矩阵 
+    D3DXMATRIXA16 mProj;
+    D3DXMatrixPerspectiveFovLH(&mProj, D3DX_PI * 0.5f, 1.0f, 0.01f, 100.0f);
+    LPDIRECT3DSURFACE9 pRTOld = NULL;
+    V(pd3dDevice->GetRenderTarget(0, &pRTOld));
+    LPDIRECT3DSURFACE9 pDSOld = NULL;
+    //if( SUCCEEDED( pd3dDevice->GetDepthStencilSurface( &pDSOld ) ) ) 
+    //{ 
+    //    // 如果使用深度缓冲 
+    //    V( pd3dDevice->SetDepthStencilSurface( g_pDepthCube ) ); 
+    //}  
+    for (int nFace = 0; nFace < 6; ++nFace) //依次完成Cubemap中的六个面的绘制 
+    {
+        LPDIRECT3DSURFACE9 pSurf;
+        V(m_pCubeMap->GetCubeMapSurface((D3DCUBEMAP_FACES)nFace, 0, &pSurf));
+        V(pd3dDevice->SetRenderTarget(0, pSurf));
+        D3DXMATRIXA16 mView = DXUTGetCubeMapViewMatrix(nFace);
+        //V(pd3dDevice->Clear(0L, NULL, D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0,255,0), 1.0f, 0L));
+        V(pd3dDevice->Clear(0L, NULL, D3DCLEAR_ZBUFFER, 0x000000ff, 1.0f, 0L));
+        pd3dDevice->SetTransform(D3DTS_VIEW, &mView);
+        pd3dDevice->SetTransform(D3DTS_PROJECTION, &mProj);
+
+        D3DMATRIX tempWorld;
+        pd3dDevice->GetTransform(D3DTS_WORLD, &tempWorld);
+        D3DXMATRIX m1, m2,m3;
+        FLOAT radius = 3.0f;
+        D3DXMatrixScaling(&m1, radius, radius, radius);
+        D3DXMatrixTranslation(&m2, 5, 1, 4);
+        D3DXMatrixTranslation(&m3, 10, 0, 0);
+        D3DXMatrixMultiply(&m2, &m1, &m2);
+        D3DXMatrixMultiply(&m3, &m1, &m3);
+
+        SetupLights(pd3dDevice);
+
+        if (SUCCEEDED(pd3dDevice->BeginScene())) {
+            //在这里绘制环境 
+            pd3dDevice->SetTransform(D3DTS_WORLD, &m2);
+            meshSphere->DrawSubset(0);
+            pd3dDevice->SetTransform(D3DTS_WORLD, &m3);
+            meshSphere->DrawSubset(0);
+
+            pd3dDevice->EndScene();
+        }
+
+        pd3dDevice->SetTransform(D3DTS_WORLD, &tempWorld);
+
+        switch (nFace) {
+            case 0:
+                V(D3DXSaveSurfaceToFile(L"D:\\0.bmp", D3DXIFF_BMP, pSurf, NULL, NULL));
+                break;
+            case 1:
+                V(D3DXSaveSurfaceToFile(L"D:\\1.bmp", D3DXIFF_BMP, pSurf, NULL, NULL));
+                break;
+            case 2:
+                V(D3DXSaveSurfaceToFile(L"D:\\2.bmp", D3DXIFF_BMP, pSurf, NULL, NULL));
+                break;
+            case 3:
+                V(D3DXSaveSurfaceToFile(L"D:\\3.bmp", D3DXIFF_BMP, pSurf, NULL, NULL));
+                break;
+            case 4:
+                V(D3DXSaveSurfaceToFile(L"D:\\4.bmp", D3DXIFF_BMP, pSurf, NULL, NULL));
+                break;
+            case 5:
+                V(D3DXSaveSurfaceToFile(L"D:\\5.bmp", D3DXIFF_BMP, pSurf, NULL, NULL));
+                break;
+
+        }
+        SAFE_RELEASE(pSurf);
+
+    }
+     //Restore depth-stencil buffer and render target 
+    /*if( pDSOld )//如果使用深度缓冲
+    {
+    V( pd3dDevice->SetDepthStencilSurface( pDSOld ) );
+    SAFE_RELEASE( pDSOld );
+    }*/
+    V(pd3dDevice->SetRenderTarget(0, pRTOld));
+    SAFE_RELEASE(pRTOld);
+
+    // Who can tell me why I get only pos-x suface here? (Lin TAO)
+    //D3DXSaveTextureToFile(L"D:\\haha.bmp", D3DXIFF_BMP, m_pCubeMap, NULL);
+
+    pd3dDevice->SetTransform(D3DTS_VIEW, &oView);
+    pd3dDevice->SetTransform(D3DTS_PROJECTION, &oProj);
+}
+
+// Another way to render the cube map
+//void RenderToCube(IDirect3DDevice9 *m_pd3dDevice, ID3DXMesh* meshSphere)
+//{
+//    HRESULT hr;
+//#define CUBEMAP_SIZE 128
+//
+//    IDirect3DCubeTexture9* m_pCubeMap;
+//    ID3DXRenderToEnvMap* m_pRenderToEnvMap;
+//
+//  // 创建RenderToEnvMap对象。其中m_pd3dDevice和m_d3dsdBackBuffer分别是指向Direct3D设备和显示缓存页面的指针。CUBEMAP_SIZE这个宏指定了Cube Map的边长，它关系到环境贴图的大小，值越大占用空间越多，绘制也越慢。
+//    LPDIRECT3DSURFACE9 pBackBuffer = NULL;
+//    D3DSURFACE_DESC m_d3dsdBackBuffer;
+//    m_pd3dDevice->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &pBackBuffer);
+//    pBackBuffer->GetDesc(&m_d3dsdBackBuffer);
+//    pBackBuffer->Release();  
+//    V(D3DXCreateRenderToEnvMap(m_pd3dDevice, CUBEMAP_SIZE, 1, m_d3dsdBackBuffer.Format, TRUE, D3DFMT_D16, &m_pRenderToEnvMap));
+//
+//
+//    // 创建空的Cube Map，D3DUSAGE_RENDERTARGET说明创建的Cube Map是一个渲染目标。
+//    D3DCAPS9 m_d3dCaps;
+//    m_pd3dDevice->GetDeviceCaps(&m_d3dCaps);
+//    assert(m_d3dCaps.TextureCaps & D3DPTEXTURECAPS_CUBEMAP);
+//    V(D3DXCreateCubeTexture(m_pd3dDevice, CUBEMAP_SIZE, 1, D3DUSAGE_RENDERTARGET, m_d3dsdBackBuffer.Format, D3DPOOL_DEFAULT, &m_pCubeMap));
+//
+//
+//    //绘制过程需要先得到一个新的投影矩阵(Projection Matrix)，这个矩阵设置了摄像机的视角和场景深度范围等。另外还要计算出一个新的观察矩阵(View Matrix)，这样Cube Map才会在“车”上随着视角的改变而变化。
+//
+//
+//
+//    // 设置投影矩阵
+//
+//    D3DXMATRIXA16 matProj;
+//
+//    D3DXMatrixPerspectiveFovLH(&matProj, D3DX_PI * 0.5f, 1.0f, 0.5f, 1000.0f);
+//
+//    // 得到当前观察矩阵
+//    D3DXMATRIXA16 matViewDir;
+//    D3DXMatrixTranslation(&matViewDir, 0, 5, 0);
+//    matViewDir._41 = 0.0f; matViewDir._42 = 0.0f; matViewDir._43 = 0.0f;
+//
+//    SetupLights(m_pd3dDevice);
+//
+//
+//    // 把场景绘制到Cube Map上
+//    V(m_pRenderToEnvMap->BeginCube(m_pCubeMap));
+//    for (UINT i = 0; i < 6; i++)
+//    {
+//        // 设置Cube Map中的一个面为当前的渲染目标
+//        m_pRenderToEnvMap->Face((D3DCUBEMAP_FACES)i, 0);
+//
+//        // 计算新的观察矩阵
+//
+//        D3DXMATRIXA16 matView;
+//
+//        matView = DXUTGetCubeMapViewMatrix((D3DCUBEMAP_FACES)i);
+//
+//        D3DXMatrixMultiply(&matView, &matViewDir, &matView);
+//
+//        // 设置投影和观察矩阵并渲染场景(省略)。注意：这里的渲染场景中的物体并不包括使用环境贴图的物体。
+//        
+//        m_pd3dDevice->SetTransform(D3DTS_VIEW, &matView);
+//        m_pd3dDevice->SetTransform(D3DTS_PROJECTION, &matProj);
+//        meshSphere->DrawSubset(0);
+//
+//    }
+//
+//    m_pRenderToEnvMap->End(0);
+//
+//    D3DXSaveTextureToFile(L"D:\\hello.bmp", D3DXIFF_BMP, m_pCubeMap, NULL);
+//
+//
+//}
+
+HRESULT CPRTMesh::GetCubeMap(IDirect3DDevice9* pd3dDevice)
+{
+    
+    HRESULT hr;
+
+    LPDIRECT3DCUBETEXTURE9 m_pCubeMap;
+
+    V(pd3dDevice->CreateCubeTexture(256, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &m_pCubeMap, NULL));
+
+
+
+    //如果需要的话，深度缓冲也可以考虑在内。
+    //IDirect3DSurface9*  g_pDepthCube = NULL;
+    //DXUTDeviceSettings d3dSettings = DXUTGetDeviceSettings();
+    //pd3dDevice->CreateDepthStencilSurface(256, 256, d3dSettings.pp.AutoDepthStencilFormat, D3DMULTISAMPLE_NONE, 0, TRUE, &g_pDepthCube, NULL);
+
+    // Init pCubeMap to point to an IDirect3DCubeTexture9 interface
+    // Init d3dDevice to point to an IDirect3DDevice9 interface
+    //RenderFaces(pd3dDevice, m_pCubeMap,meshSphere);
+
+    RenderSceneIntoCubeMap(pd3dDevice, m_pCubeMap,meshSphere);
+
+
+    SAFE_RELEASE(m_pCubeMap);
+    return S_OK;
+}
+
 
 //--------------------------------------------------------------------------------------
 // This function loads the mesh and ensures the mesh has normals; it also optimizes the 
@@ -202,6 +530,9 @@ HRESULT CPRTMesh::LoadMesh( IDirect3DDevice9* pd3dDevice, WCHAR* strMeshFileName
         &meshSphere,
         0 //通常设置成0(或NULL)  
         );
+
+    GetCubeMap(pd3dDevice);
+    //RenderToCube(m_pd3dDevice, meshSphere);
 
     // Release any previous mesh object
     SAFE_RELEASE( m_pMesh );
@@ -893,6 +1224,8 @@ void CPRTMesh::ComputeShaderConstants( float* pSHCoeffsRed, float* pSHCoeffsGree
 //--------------------------------------------------------------------------------------
 void CPRTMesh::RenderWithPRT(IDirect3DDevice9* pd3dDevice, D3DXMATRIX* pmWorldViewProj, bool bRenderWithAlbedo)
 {
+
+    SetupLights(pd3dDevice);
     D3DMATRIX tempWorld;
     pd3dDevice->GetTransform(D3DTS_WORLD, &tempWorld);
 

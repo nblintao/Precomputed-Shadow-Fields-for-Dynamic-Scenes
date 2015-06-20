@@ -4,6 +4,8 @@ VisualStudioVersion = 12.0.21005.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PRTDemo", "PRTDemo_2010.vcxproj", "{D3D0911C-96D0-4629-88B8-122C0256058C}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ShadowfieldSampler", "..\ShadowfieldSampler\ShadowfieldSampler.vcxproj", "{60FA6104-5CE5-4CDF-96D0-AB18A7D4AEA4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -26,6 +28,15 @@ Global
 		{D3D0911C-96D0-4629-88B8-122C0256058C}.Release|Win32.Build.0 = Release|Win32
 		{D3D0911C-96D0-4629-88B8-122C0256058C}.Release|x64.ActiveCfg = Release|x64
 		{D3D0911C-96D0-4629-88B8-122C0256058C}.Release|x64.Build.0 = Release|x64
+		{60FA6104-5CE5-4CDF-96D0-AB18A7D4AEA4}.Debug|Win32.ActiveCfg = Debug|Win32
+		{60FA6104-5CE5-4CDF-96D0-AB18A7D4AEA4}.Debug|Win32.Build.0 = Debug|Win32
+		{60FA6104-5CE5-4CDF-96D0-AB18A7D4AEA4}.Debug|x64.ActiveCfg = Debug|Win32
+		{60FA6104-5CE5-4CDF-96D0-AB18A7D4AEA4}.Profile|Win32.ActiveCfg = Release|Win32
+		{60FA6104-5CE5-4CDF-96D0-AB18A7D4AEA4}.Profile|Win32.Build.0 = Release|Win32
+		{60FA6104-5CE5-4CDF-96D0-AB18A7D4AEA4}.Profile|x64.ActiveCfg = Release|Win32
+		{60FA6104-5CE5-4CDF-96D0-AB18A7D4AEA4}.Release|Win32.ActiveCfg = Release|Win32
+		{60FA6104-5CE5-4CDF-96D0-AB18A7D4AEA4}.Release|Win32.Build.0 = Release|Win32
+		{60FA6104-5CE5-4CDF-96D0-AB18A7D4AEA4}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

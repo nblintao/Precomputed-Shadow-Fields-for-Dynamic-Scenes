@@ -416,7 +416,9 @@
     <CLInclude Include="PRTOptionsDlg.h" />
     <ClCompile Include="PRTSimulator.cpp" />
     <CLInclude Include="PRTSimulator.h" />
+    <ClCompile Include="ShadowFieldSampler.cpp" />
     <ClCompile Include="SHFuncView.cpp" />
+    <ClInclude Include="ShadowFieldSampler.h" />
     <CLInclude Include="SHFuncView.h" />
   </ItemGroup>
   <ItemGroup>

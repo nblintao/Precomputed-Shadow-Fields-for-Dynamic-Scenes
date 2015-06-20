@@ -22,7 +22,8 @@ public:
     HRESULT LoadEffects( IDirect3DDevice9* pd3dDevice, const D3DCAPS9* pDeviceCaps );
 
     // Mesh 
-    HRESULT LoadMesh( IDirect3DDevice9* pd3dDevice, WCHAR* strMeshFileName );
+    HRESULT GetCubeMap(IDirect3DDevice9* pd3dDevice);
+    HRESULT LoadMesh(IDirect3DDevice9* pd3dDevice, WCHAR* strMeshFileName);
     HRESULT SetMesh( IDirect3DDevice9* pd3dDevice, ID3DXMesh* pMesh );
     HRESULT AdjustMeshDecl( IDirect3DDevice9* pd3dDevice, ID3DXMesh** ppMesh );
     DWORD   GetNumVertices()
