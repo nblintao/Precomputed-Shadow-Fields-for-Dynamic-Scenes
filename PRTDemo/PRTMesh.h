@@ -7,6 +7,14 @@
 
 #include "DXUTcamera.h"
 
+class Ball{
+public:
+    Ball(FLOAT r, D3DXVECTOR4 pos);
+    //~Ball();
+    FLOAT r;
+    D3DXVECTOR4 pos;
+};
+
 class CPRTMesh
 {
 public:
@@ -25,6 +33,7 @@ public:
     HRESULT GetCubeMap(IDirect3DDevice9* pd3dDevice);
     HRESULT LoadMesh(IDirect3DDevice9* pd3dDevice, WCHAR* strMeshFileName);
     HRESULT SetMesh( IDirect3DDevice9* pd3dDevice, ID3DXMesh* pMesh );
+    HRESULT SetUpBalls();
     HRESULT AdjustMeshDecl( IDirect3DDevice9* pd3dDevice, ID3DXMesh** ppMesh );
     DWORD   GetNumVertices()
     {
@@ -196,4 +205,6 @@ protected:
 
     ID3DXMesh* meshTeapot;
     ID3DXMesh* meshSphere;
+    Ball* ballList[10];
+    UINT ballNum = 0;
 };

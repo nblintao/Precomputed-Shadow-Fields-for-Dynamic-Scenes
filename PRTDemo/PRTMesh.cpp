@@ -11,6 +11,23 @@
 //#define DEBUG_VS   // Uncomment this line to debug vertex shaders 
 //#define DEBUG_PS   // Uncomment this line to debug pixel shaders 
 
+
+Ball::Ball(FLOAT r, D3DXVECTOR4 pos) :r(r), pos(pos)
+{
+
+}
+
+
+HRESULT CPRTMesh::SetUpBalls()
+{
+    ballList[0] = new Ball(1, D3DXVECTOR4(0.5f, 7.0f, 1.5f, 0));
+    ballList[1] = new Ball(1, D3DXVECTOR4(0.5f, 2.0f, 1.5f, 0));
+    ballNum = 2;
+    return S_OK;
+}
+
+
+
 //--------------------------------------------------------------------------------------
 CPRTMesh::CPRTMesh( void )
 {
@@ -51,6 +68,9 @@ CPRTMesh::~CPRTMesh( void )
     SAFE_RELEASE( m_pLDPRTMesh );
     SAFE_RELEASE(meshTeapot);
     SAFE_RELEASE(meshSphere);
+    for (UINT i = 0; i < ballNum; i++) {
+        SAFE_DELETE(ballList[i]);
+    }
 }
 
 
@@ -313,16 +333,17 @@ void RenderSceneIntoCubeMap(IDirect3DDevice9 *pd3dDevice, LPDIRECT3DCUBETEXTURE9
 {
     HRESULT hr;
 
-    D3DXMATRIXA16 oView, oProj;
+    D3DXMATRIXA16 oView, oProj, oWorld;
     pd3dDevice->GetTransform(D3DTS_VIEW, &oView);
     pd3dDevice->GetTransform(D3DTS_PROJECTION, &oProj);
+    pd3dDevice->GetTransform(D3DTS_WORLD, &oWorld);
 
     // Cubemap使用的投影矩阵 
     D3DXMATRIXA16 mProj;
     D3DXMatrixPerspectiveFovLH(&mProj, D3DX_PI * 0.5f, 1.0f, 0.01f, 100.0f);
     LPDIRECT3DSURFACE9 pRTOld = NULL;
     V(pd3dDevice->GetRenderTarget(0, &pRTOld));
-    LPDIRECT3DSURFACE9 pDSOld = NULL;
+    //LPDIRECT3DSURFACE9 pDSOld = NULL;
     //if( SUCCEEDED( pd3dDevice->GetDepthStencilSurface( &pDSOld ) ) ) 
     //{ 
     //    // 如果使用深度缓冲 
@@ -339,8 +360,7 @@ void RenderSceneIntoCubeMap(IDirect3DDevice9 *pd3dDevice, LPDIRECT3DCUBETEXTURE9
         pd3dDevice->SetTransform(D3DTS_VIEW, &mView);
         pd3dDevice->SetTransform(D3DTS_PROJECTION, &mProj);
 
-        D3DMATRIX tempWorld;
-        pd3dDevice->GetTransform(D3DTS_WORLD, &tempWorld);
+
         D3DXMATRIX m1, m2,m3;
         FLOAT radius = 3.0f;
         D3DXMatrixScaling(&m1, radius, radius, radius);
@@ -361,29 +381,13 @@ void RenderSceneIntoCubeMap(IDirect3DDevice9 *pd3dDevice, LPDIRECT3DCUBETEXTURE9
             pd3dDevice->EndScene();
         }
 
-        pd3dDevice->SetTransform(D3DTS_WORLD, &tempWorld);
-
-        switch (nFace) {
-            case 0:
-                V(D3DXSaveSurfaceToFile(L"D:\\0.bmp", D3DXIFF_BMP, pSurf, NULL, NULL));
-                break;
-            case 1:
-                V(D3DXSaveSurfaceToFile(L"D:\\1.bmp", D3DXIFF_BMP, pSurf, NULL, NULL));
-                break;
-            case 2:
-                V(D3DXSaveSurfaceToFile(L"D:\\2.bmp", D3DXIFF_BMP, pSurf, NULL, NULL));
-                break;
-            case 3:
-                V(D3DXSaveSurfaceToFile(L"D:\\3.bmp", D3DXIFF_BMP, pSurf, NULL, NULL));
-                break;
-            case 4:
-                V(D3DXSaveSurfaceToFile(L"D:\\4.bmp", D3DXIFF_BMP, pSurf, NULL, NULL));
-                break;
-            case 5:
-                V(D3DXSaveSurfaceToFile(L"D:\\5.bmp", D3DXIFF_BMP, pSurf, NULL, NULL));
-                break;
-
-        }
+        WCHAR addr[100] = L"D:\\CGDebug\\";
+        WCHAR num[10];
+        wsprintfW(num, L"%d", nFace);
+        lstrcat(addr, num);
+        lstrcat(addr, L".bmp");
+        V(D3DXSaveSurfaceToFile(addr, D3DXIFF_BMP, pSurf, NULL, NULL));
+       
         SAFE_RELEASE(pSurf);
 
     }
@@ -401,9 +405,12 @@ void RenderSceneIntoCubeMap(IDirect3DDevice9 *pd3dDevice, LPDIRECT3DCUBETEXTURE9
 
     pd3dDevice->SetTransform(D3DTS_VIEW, &oView);
     pd3dDevice->SetTransform(D3DTS_PROJECTION, &oProj);
+    pd3dDevice->SetTransform(D3DTS_WORLD, &oWorld);
+
 }
 
 // Another way to render the cube map
+// Based on http://www.wangchao.net.cn/bbsdetail_69543.html
 //void RenderToCube(IDirect3DDevice9 *m_pd3dDevice, ID3DXMesh* meshSphere)
 //{
 //    HRESULT hr;
@@ -530,6 +537,9 @@ HRESULT CPRTMesh::LoadMesh( IDirect3DDevice9* pd3dDevice, WCHAR* strMeshFileName
         &meshSphere,
         0 //通常设置成0(或NULL)  
         );
+
+    SetUpBalls();
+    
 
     GetCubeMap(pd3dDevice);
     //RenderToCube(m_pd3dDevice, meshSphere);
@@ -1229,17 +1239,24 @@ void CPRTMesh::RenderWithPRT(IDirect3DDevice9* pd3dDevice, D3DXMATRIX* pmWorldVi
     D3DMATRIX tempWorld;
     pd3dDevice->GetTransform(D3DTS_WORLD, &tempWorld);
 
-    D3DXMATRIX sphereWorld;
-    FLOAT radius = 5.0f;
-    D3DXMatrixScaling(&sphereWorld, radius, radius, radius);
-    D3DXMatrixMultiply(&sphereWorld, &sphereWorld, pmWorldViewProj);
-    pd3dDevice->SetTransform(D3DTS_WORLD, &sphereWorld);
-    meshSphere->DrawSubset(0);
+    for (UINT i = 0; i < ballNum; i++) {
+        D3DXMATRIX m1,m2;
+        Ball* ball = ballList[i];
+        FLOAT radius = ball->r;
+        D3DXMatrixScaling(&m1, radius, radius, radius);
+        D3DXMatrixTranslation(&m2, ball->pos.x, ball->pos.y, ball->pos.z);
+        D3DXMatrixMultiply(&m1, &m1, &m2);
+        D3DXMatrixMultiply(&m1, &m1, pmWorldViewProj);
+        pd3dDevice->SetTransform(D3DTS_WORLD, &m1);
+        meshSphere->DrawSubset(0);
+    }
+
+
 
     pd3dDevice->SetTransform(D3DTS_WORLD, &tempWorld);
     
-    for (int i = 0; i < 2; i++) {
-
+    //for (int i = 0; i < 2; i++) {
+    for (int i = 0; i < 1; i++) {
         D3DXMATRIX matWorld;//世界变换矩阵
         D3DXMATRIX matTranlate, matRotation, matScale;//变换矩阵，旋转矩阵，缩放矩阵
         //D3DXMatrixScaling(&matScale, 1.0f, 1.0f, 5.0);//在Z轴上放大5倍

@@ -84,7 +84,6 @@
     <CLInclude Include="PRTSimulator.h" />
     <ClCompile Include="SHFuncView.cpp" />
     <CLInclude Include="SHFuncView.h" />
-    <ClCompile Include="ShadowFieldSampler.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="LDPRT.fx">
@@ -113,7 +112,6 @@
     <ResourceCompile Include="PRTDemo.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
-    <ClInclude Include="ShadowFieldSampler.h" />
   </ItemGroup>
   <ItemGroup>
   </ItemGroup>
