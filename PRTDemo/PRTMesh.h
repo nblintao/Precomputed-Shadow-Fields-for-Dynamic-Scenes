@@ -6,7 +6,8 @@
 #pragma once
 
 #include "DXUTcamera.h"
-//#define SHADOWFIELD
+#define SHADOWFIELD
+//#define SHADOWFIELDPRE
 #define OUTPUTCUBEMAP
 #define CUBE_EDGELENGTH 64
 #define SPHERENUM 4

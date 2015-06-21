@@ -1,4 +1,4 @@
-//--------------------------------------------------------------------------------------
+ï»¿//--------------------------------------------------------------------------------------
 // File: PRTMesh.cpp
 //
 // Copyright (c) Microsoft Corporation. All rights reserved.
@@ -339,7 +339,7 @@ VOID SetupLights(IDirect3DDevice9* g_pd3dDevice)
 //    IDirect3DCubeTexture9* m_pCubeMap;
 //    ID3DXRenderToEnvMap* m_pRenderToEnvMap;
 //
-//  // ´´½¨RenderToEnvMap¶ÔÏó¡£ÆäÖÐm_pd3dDeviceºÍm_d3dsdBackBuffer·Ö±ðÊÇÖ¸ÏòDirect3DÉè±¸ºÍÏÔÊ¾»º´æÒ³ÃæµÄÖ¸Õë¡£CUBEMAP_SIZEÕâ¸öºêÖ¸¶¨ÁËCube MapµÄ±ß³¤£¬Ëü¹ØÏµµ½»·¾³ÌùÍ¼µÄ´óÐ¡£¬ÖµÔ½´óÕ¼ÓÃ¿Õ¼äÔ½¶à£¬»æÖÆÒ²Ô½Âý¡£
+//  // åˆ›å»ºRenderToEnvMapå¯¹è±¡ã€‚å…¶ä¸­m_pd3dDeviceå’Œm_d3dsdBackBufferåˆ†åˆ«æ˜¯æŒ‡å‘Direct3Dè®¾å¤‡å’Œæ˜¾ç¤ºç¼“å­˜é¡µé¢çš„æŒ‡é’ˆã€‚CUBEMAP_SIZEè¿™ä¸ªå®æŒ‡å®šäº†Cube Mapçš„è¾¹é•¿ï¼Œå®ƒå…³ç³»åˆ°çŽ¯å¢ƒè´´å›¾çš„å¤§å°ï¼Œå€¼è¶Šå¤§å ç”¨ç©ºé—´è¶Šå¤šï¼Œç»˜åˆ¶ä¹Ÿè¶Šæ…¢ã€‚
 //    LPDIRECT3DSURFACE9 pBackBuffer = NULL;
 //    D3DSURFACE_DESC m_d3dsdBackBuffer;
 //    m_pd3dDevice->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &pBackBuffer);
@@ -348,24 +348,24 @@ VOID SetupLights(IDirect3DDevice9* g_pd3dDevice)
 //    V(D3DXCreateRenderToEnvMap(m_pd3dDevice, CUBEMAP_SIZE, 1, m_d3dsdBackBuffer.Format, TRUE, D3DFMT_D16, &m_pRenderToEnvMap));
 //
 //
-//    // ´´½¨¿ÕµÄCube Map£¬D3DUSAGE_RENDERTARGETËµÃ÷´´½¨µÄCube MapÊÇÒ»¸öäÖÈ¾Ä¿±ê¡£
+//    // åˆ›å»ºç©ºçš„Cube Mapï¼ŒD3DUSAGE_RENDERTARGETè¯´æ˜Žåˆ›å»ºçš„Cube Mapæ˜¯ä¸€ä¸ªæ¸²æŸ“ç›®æ ‡ã€‚
 //    D3DCAPS9 m_d3dCaps;
 //    m_pd3dDevice->GetDeviceCaps(&m_d3dCaps);
 //    assert(m_d3dCaps.TextureCaps & D3DPTEXTURECAPS_CUBEMAP);
 //    V(D3DXCreateCubeTexture(m_pd3dDevice, CUBEMAP_SIZE, 1, D3DUSAGE_RENDERTARGET, m_d3dsdBackBuffer.Format, D3DPOOL_DEFAULT, &m_pCubeMap));
 //
 //
-//    //»æÖÆ¹ý³ÌÐèÒªÏÈµÃµ½Ò»¸öÐÂµÄÍ¶Ó°¾ØÕó(Projection Matrix)£¬Õâ¸ö¾ØÕóÉèÖÃÁËÉãÏñ»úµÄÊÓ½ÇºÍ³¡¾°Éî¶È·¶Î§µÈ¡£ÁíÍâ»¹Òª¼ÆËã³öÒ»¸öÐÂµÄ¹Û²ì¾ØÕó(View Matrix)£¬ÕâÑùCube Map²Å»áÔÚ¡°³µ¡±ÉÏËæ×ÅÊÓ½ÇµÄ¸Ä±ä¶ø±ä»¯¡£
+//    //ç»˜åˆ¶è¿‡ç¨‹éœ€è¦å…ˆå¾—åˆ°ä¸€ä¸ªæ–°çš„æŠ•å½±çŸ©é˜µ(Projection Matrix)ï¼Œè¿™ä¸ªçŸ©é˜µè®¾ç½®äº†æ‘„åƒæœºçš„è§†è§’å’Œåœºæ™¯æ·±åº¦èŒƒå›´ç­‰ã€‚å¦å¤–è¿˜è¦è®¡ç®—å‡ºä¸€ä¸ªæ–°çš„è§‚å¯ŸçŸ©é˜µ(View Matrix)ï¼Œè¿™æ ·Cube Mapæ‰ä¼šåœ¨â€œè½¦â€ä¸Šéšç€è§†è§’çš„æ”¹å˜è€Œå˜åŒ–ã€‚
 //
 //
 //
-//    // ÉèÖÃÍ¶Ó°¾ØÕó
+//    // è®¾ç½®æŠ•å½±çŸ©é˜µ
 //
 //    D3DXMATRIXA16 matProj;
 //
 //    D3DXMatrixPerspectiveFovLH(&matProj, D3DX_PI * 0.5f, 1.0f, 0.5f, 1000.0f);
 //
-//    // µÃµ½µ±Ç°¹Û²ì¾ØÕó
+//    // å¾—åˆ°å½“å‰è§‚å¯ŸçŸ©é˜µ
 //    D3DXMATRIXA16 matViewDir;
 //    D3DXMatrixTranslation(&matViewDir, 0, 5, 0);
 //    matViewDir._41 = 0.0f; matViewDir._42 = 0.0f; matViewDir._43 = 0.0f;
@@ -373,14 +373,14 @@ VOID SetupLights(IDirect3DDevice9* g_pd3dDevice)
 //    SetupLights(m_pd3dDevice);
 //
 //
-//    // °Ñ³¡¾°»æÖÆµ½Cube MapÉÏ
+//    // æŠŠåœºæ™¯ç»˜åˆ¶åˆ°Cube Mapä¸Š
 //    V(m_pRenderToEnvMap->BeginCube(m_pCubeMap));
 //    for (UINT i = 0; i < 6; i++)
 //    {
-//        // ÉèÖÃCube MapÖÐµÄÒ»¸öÃæÎªµ±Ç°µÄäÖÈ¾Ä¿±ê
+//        // è®¾ç½®Cube Mapä¸­çš„ä¸€ä¸ªé¢ä¸ºå½“å‰çš„æ¸²æŸ“ç›®æ ‡
 //        m_pRenderToEnvMap->Face((D3DCUBEMAP_FACES)i, 0);
 //
-//        // ¼ÆËãÐÂµÄ¹Û²ì¾ØÕó
+//        // è®¡ç®—æ–°çš„è§‚å¯ŸçŸ©é˜µ
 //
 //        D3DXMATRIXA16 matView;
 //
@@ -388,7 +388,7 @@ VOID SetupLights(IDirect3DDevice9* g_pd3dDevice)
 //
 //        D3DXMatrixMultiply(&matView, &matViewDir, &matView);
 //
-//        // ÉèÖÃÍ¶Ó°ºÍ¹Û²ì¾ØÕó²¢äÖÈ¾³¡¾°(Ê¡ÂÔ)¡£×¢Òâ£ºÕâÀïµÄäÖÈ¾³¡¾°ÖÐµÄÎïÌå²¢²»°üÀ¨Ê¹ÓÃ»·¾³ÌùÍ¼µÄÎïÌå¡£
+//        // è®¾ç½®æŠ•å½±å’Œè§‚å¯ŸçŸ©é˜µå¹¶æ¸²æŸ“åœºæ™¯(çœç•¥)ã€‚æ³¨æ„ï¼šè¿™é‡Œçš„æ¸²æŸ“åœºæ™¯ä¸­çš„ç‰©ä½“å¹¶ä¸åŒ…æ‹¬ä½¿ç”¨çŽ¯å¢ƒè´´å›¾çš„ç‰©ä½“ã€‚
 //        
 //        m_pd3dDevice->SetTransform(D3DTS_VIEW, &matView);
 //        m_pd3dDevice->SetTransform(D3DTS_PROJECTION, &matProj);
@@ -413,7 +413,7 @@ HRESULT CPRTMesh::GetCubeMap(IDirect3DDevice9* pd3dDevice)
 
     V(pd3dDevice->CreateCubeTexture(CUBE_EDGELENGTH, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &m_pCubeMap, NULL));
 
-    //Èç¹ûÐèÒªµÄ»°£¬Éî¶È»º³åÒ²¿ÉÒÔ¿¼ÂÇÔÚÄÚ¡£
+    //å¦‚æžœéœ€è¦çš„è¯ï¼Œæ·±åº¦ç¼“å†²ä¹Ÿå¯ä»¥è€ƒè™‘åœ¨å†…ã€‚
     //IDirect3DSurface9*  g_pDepthCube = NULL;
     //DXUTDeviceSettings d3dSettings = DXUTGetDeviceSettings();
     //pd3dDevice->CreateDepthStencilSurface(256, 256, d3dSettings.pp.AutoDepthStencilFormat, D3DMULTISAMPLE_NONE, 0, TRUE, &g_pDepthCube, NULL);
@@ -541,22 +541,22 @@ HRESULT CPRTMesh::LoadMesh( IDirect3DDevice9* pd3dDevice, WCHAR* strMeshFileName
     WCHAR str[MAX_PATH];
     HRESULT hr;
 
-#ifdef SHADOWFIELD
+#ifdef SHADOWFIELDPRE
     SAFE_RELEASE(meshTeapot);
     D3DXCreateTeapot(
-        pd3dDevice, //D3D»æÖÆ¶ÔÏó  
+        pd3dDevice, //D3Dç»˜åˆ¶å¯¹è±¡  
         &meshTeapot,
-        0 //Í¨³£ÉèÖÃ³É0(»òNULL)  
+        0 //é€šå¸¸è®¾ç½®æˆ0(æˆ–NULL)  
         );
 
     SAFE_RELEASE(meshSphere);
     D3DXCreateSphere(
-        pd3dDevice, //D3D»æÖÆ¶ÔÏó  
-        1.0f, //ÇòÃæÌå°ë¾¶  
-        100, //ÓÃ¼¸Ìõ¾­Ïß»æÖÆ  
-        100, //ÓÃ¼¸ÌõÎ¬Ïß»æÖÆ  
+        pd3dDevice, //D3Dç»˜åˆ¶å¯¹è±¡  
+        1.0f, //çƒé¢ä½“åŠå¾„  
+        100, //ç”¨å‡ æ¡ç»çº¿ç»˜åˆ¶  
+        100, //ç”¨å‡ æ¡ç»´çº¿ç»˜åˆ¶  
         &meshSphere,
-        0 //Í¨³£ÉèÖÃ³É0(»òNULL)  
+        0 //é€šå¸¸è®¾ç½®æˆ0(æˆ–NULL)  
         );
 
     SetUpBalls();
@@ -1004,7 +1004,7 @@ HRESULT CPRTMesh::LoadEffects( IDirect3DDevice9* pd3dDevice, const D3DCAPS9* pDe
     // the shaders to be optimized and to run exactly the way they will run in 
     // the release configuration of this program.
     dwShaderFlags |= D3DXSHADER_DEBUG;
-    #endif
+#endif
 
 #ifdef DEBUG_VS
         dwShaderFlags |= D3DXSHADER_FORCE_VS_SOFTWARE_NOOPT;
@@ -1023,8 +1023,13 @@ HRESULT CPRTMesh::LoadEffects( IDirect3DDevice9* pd3dDevice, const D3DCAPS9* pDe
 
     // If this fails, there should be debug output as to 
     // they the .fx file failed to compile
-    V( D3DXCreateEffectFromFile( pd3dDevice, str, aDefines, NULL,
-                                 dwShaderFlags, NULL, &m_pPRTEffect, NULL ) );
+    //V( D3DXCreateEffectFromFile( pd3dDevice, str, aDefines, NULL, dwShaderFlags, NULL, &m_pPRTEffect, NULL ) );
+   
+    ID3DXBuffer *pErrorMsgs = NULL;
+    hr = D3DXCreateEffectFromFile(pd3dDevice, str, aDefines, NULL, dwShaderFlags, NULL, &m_pPRTEffect, &pErrorMsgs);
+    if (FAILED(hr))
+    OutputDebugStringA((LPCSTR)pErrorMsgs->GetBufferPointer());
+
 
     // Make sure the technique works on this card
     hr = m_pPRTEffect->ValidateTechnique( "RenderWithPRTColorLights" );
@@ -1133,11 +1138,11 @@ void CPRTMesh::ExtractCompressedDataForPRTShader()
         V( m_pPRTCompBuffer->ExtractBasis( iCluster, &m_aPRTClusterBases[iCluster * nClusterBasisSize] ) );
     }
 
-#ifndef SHADOWFIELD
+//#ifndef SHADOWFIELD
     SAFE_DELETE_ARRAY( m_aPRTConstants );
     m_aPRTConstants = new float[dwNumClusters * ( 4 + dwNumChannels * dwNumPCA )];
     assert( m_aPRTConstants );
-#endif
+//#endif
 }
 
 
@@ -1274,6 +1279,15 @@ void CPRTMesh::ComputeShaderConstantsWithoutCompress(float* pSHCoeffsRed, float*
     UINT dwNumClusters = m_pPRTCompBuffer->GetNumClusters();
     UINT dwNumPCA = m_pPRTCompBuffer->GetNumPCA();
     V(m_pPRTEffect->SetFloatArray("aPRTClusterBases", (float*)m_aPRTClusterBases, ((dwNumPCA + 1) * dwNumCoeffs * dwNumChannels)*dwNumClusters));
+    
+    FLOAT *m_aEnvSHCoeffs = new FLOAT[dwNumCoeffs * 3];
+    for (UINT i = 0; i < dwNumCoeffs; i++) {
+        m_aEnvSHCoeffs[0 * dwNumCoeffs + i] = pSHCoeffsRed[i];
+        m_aEnvSHCoeffs[1 * dwNumCoeffs + i] = pSHCoeffsGreen[i];
+        m_aEnvSHCoeffs[2 * dwNumCoeffs + i] = pSHCoeffsBlue[i];
+    }
+    V(m_pPRTEffect->SetFloatArray("aEnvSHCoeffs", (float*)m_aPRTClusterBases, dwNumCoeffs*3));
+    SAFE_DELETE(m_aEnvSHCoeffs);
 
 }
 
@@ -1303,17 +1317,17 @@ void CPRTMesh::RenderWithPRT(IDirect3DDevice9* pd3dDevice, D3DXMATRIX* pmWorldVi
 
     //for (int i = 0; i < 2; i++) {
     for (int i = 0; i < 1; i++) {
-        D3DXMATRIX matWorld;//ÊÀ½ç±ä»»¾ØÕó
-        D3DXMATRIX matTranlate, matRotation, matScale;//±ä»»¾ØÕó£¬Ðý×ª¾ØÕó£¬Ëõ·Å¾ØÕó
-        //D3DXMatrixScaling(&matScale, 1.0f, 1.0f, 5.0);//ÔÚZÖáÉÏ·Å´ó5±¶
-        //FLOAT fAngle = 60 * (2.0f*D3DX_PI) / 360.0f;//¼ÆËãÐèÒªÐý×ªµÄ½Ç¶È
-        //D3DXMatrixRotationY(&matRotation, fAngle);//ÈÆYÖáÐý×ª60¶È
-        //D3DXMatrixMultiply(&matTranlate, &matScale, &matRotation);//×éºÏÁ½¸ö¾ØÕó
-        D3DXMatrixTranslation(&matTranlate, 0.0f, 5.0f*i, 0.0f);//ÑØXÆ½ÒÆ30¸öµ¥Î»
-        //D3DXMatrixMultiply(&matWorld, &matWorld, &matTranlate);//×éºÏµÃµ½ÊÀ½ç±ä»Ã¾ØÕó
+        D3DXMATRIX matWorld;//ä¸–ç•Œå˜æ¢çŸ©é˜µ
+        D3DXMATRIX matTranlate, matRotation, matScale;//å˜æ¢çŸ©é˜µï¼Œæ—‹è½¬çŸ©é˜µï¼Œç¼©æ”¾çŸ©é˜µ
+        //D3DXMatrixScaling(&matScale, 1.0f, 1.0f, 5.0);//åœ¨Zè½´ä¸Šæ”¾å¤§5å€
+        //FLOAT fAngle = 60 * (2.0f*D3DX_PI) / 360.0f;//è®¡ç®—éœ€è¦æ—‹è½¬çš„è§’åº¦
+        //D3DXMatrixRotationY(&matRotation, fAngle);//ç»•Yè½´æ—‹è½¬60åº¦
+        //D3DXMatrixMultiply(&matTranlate, &matScale, &matRotation);//ç»„åˆä¸¤ä¸ªçŸ©é˜µ
+        D3DXMatrixTranslation(&matTranlate, 0.0f, 5.0f*i, 0.0f);//æ²¿Xå¹³ç§»30ä¸ªå•ä½
+        //D3DXMatrixMultiply(&matWorld, &matWorld, &matTranlate);//ç»„åˆå¾—åˆ°ä¸–ç•Œå˜å¹»çŸ©é˜µ
 
         D3DXMATRIX mWorldViewProjNew;
-        D3DXMatrixMultiply(&mWorldViewProjNew, &matTranlate, pmWorldViewProj);//×éºÏµÃµ½ÊÀ½ç±ä»Ã¾ØÕó
+        D3DXMatrixMultiply(&mWorldViewProjNew, &matTranlate, pmWorldViewProj);//ç»„åˆå¾—åˆ°ä¸–ç•Œå˜å¹»çŸ©é˜µ
 
         DoRenderWithPRT(pd3dDevice, &mWorldViewProjNew, bRenderWithAlbedo);
     }
