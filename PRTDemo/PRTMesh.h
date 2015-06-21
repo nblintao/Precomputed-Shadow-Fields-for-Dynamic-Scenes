@@ -6,7 +6,7 @@
 #pragma once
 
 #include "DXUTcamera.h"
-#define SHADOWFIELD
+//#define SHADOWFIELD
 #define OUTPUTCUBEMAP
 #define CUBE_EDGELENGTH 64
 #define SPHERENUM 4
@@ -98,7 +98,9 @@ public:
                                NULL, LPVOID lpUserContext=NULL );
     void    ExtractCompressedDataForPRTShader();
     void    ComputeShaderConstants( float* pSHCoeffsRed, float* pSHCoeffsGreen, float* pSHCoeffsBlue,
-                                    DWORD dwNumCoeffsPerChannel );
+        DWORD dwNumCoeffsPerChannel);
+    void    ComputeShaderConstantsWithoutCompress(float* pSHCoeffsRed, float* pSHCoeffsGreen, float* pSHCoeffsBlue,
+        DWORD dwNumCoeffsPerChannel);
     void    RenderWithPRT( IDirect3DDevice9* pd3dDevice, D3DXMATRIX* pmWorldViewProj, bool bRenderWithAlbedoTexture );
     void    DoRenderWithPRT(IDirect3DDevice9* pd3dDevice, D3DXMATRIX* pmWorldViewProj, bool bRenderWithAlbedoTexture);
     HRESULT SavePRTBufferToFile( WCHAR* strFile );

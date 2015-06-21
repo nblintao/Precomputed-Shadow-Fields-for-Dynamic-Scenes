@@ -955,6 +955,7 @@ HRESULT CPRTMesh::LoadEffects( IDirect3DDevice9* pd3dDevice, const D3DCAPS9* pDe
     UINT dwNumChannels = m_pPRTCompBuffer->GetNumChannels();
     UINT dwNumClusters = m_pPRTCompBuffer->GetNumClusters();
     UINT dwNumPCA = m_pPRTCompBuffer->GetNumPCA();
+    UINT dwNumCoeffs = m_pPRTCompBuffer->GetNumCoeffs();
 
     // The number of vertex consts need by the shader can't exceed the 
     // amount the HW can support
@@ -967,19 +968,24 @@ HRESULT CPRTMesh::LoadEffects( IDirect3DDevice9* pd3dDevice, const D3DCAPS9* pDe
     SAFE_RELEASE( m_pNDotLEffect );
     SAFE_RELEASE( m_pLDPRTEffect );
 
-    D3DXMACRO aDefines[3];
+    D3DXMACRO aDefines[4];
     CHAR szMaxNumClusters[64];
     sprintf_s( szMaxNumClusters, 64, "%d", dwNumClusters );
     szMaxNumClusters[63] = 0;
     CHAR szMaxNumPCA[64];
     sprintf_s( szMaxNumPCA, 64, "%d", dwNumPCA );
     szMaxNumPCA[63] = 0;
+    CHAR szMaxNumCoeffs[64];
+    sprintf_s(szMaxNumCoeffs, 64, "%d", dwNumCoeffs);
+    szMaxNumPCA[63] = 0;
     aDefines[0].Name = "NUM_CLUSTERS";
     aDefines[0].Definition = szMaxNumClusters;
     aDefines[1].Name = "NUM_PCA";
     aDefines[1].Definition = szMaxNumPCA;
-    aDefines[2].Name = NULL;
-    aDefines[2].Definition = NULL;
+    aDefines[2].Name = "NUM_COEFFS";
+    aDefines[2].Definition = szMaxNumCoeffs;
+    aDefines[3].Name = NULL;
+    aDefines[3].Definition = NULL;
 
     // Define DEBUG_VS and/or DEBUG_PS to debug vertex and/or pixel shaders with the shader debugger.  
     // Debugging vertex shaders requires either REF or software vertex processing, and debugging 
@@ -1009,7 +1015,11 @@ HRESULT CPRTMesh::LoadEffects( IDirect3DDevice9* pd3dDevice, const D3DCAPS9* pDe
 
     // Read the D3DX effect file
     WCHAR str[MAX_PATH];
-    V( DXUTFindDXSDKMediaFileCch( str, MAX_PATH, TEXT( "PRT.fx" ) ) );
+#ifndef SHADOWFIELD
+    V(DXUTFindDXSDKMediaFileCch(str, MAX_PATH, TEXT("PRT.fx")));
+#else
+    V(DXUTFindDXSDKMediaFileCch(str, MAX_PATH, TEXT("SF.fx")));
+#endif
 
     // If this fails, there should be debug output as to 
     // they the .fx file failed to compile
@@ -1123,9 +1133,11 @@ void CPRTMesh::ExtractCompressedDataForPRTShader()
         V( m_pPRTCompBuffer->ExtractBasis( iCluster, &m_aPRTClusterBases[iCluster * nClusterBasisSize] ) );
     }
 
+#ifndef SHADOWFIELD
     SAFE_DELETE_ARRAY( m_aPRTConstants );
     m_aPRTConstants = new float[dwNumClusters * ( 4 + dwNumChannels * dwNumPCA )];
     assert( m_aPRTConstants );
+#endif
 }
 
 
@@ -1250,6 +1262,20 @@ void CPRTMesh::ComputeShaderConstants( float* pSHCoeffsRed, float* pSHCoeffsGree
                                     ( 4 + dwNumChannels * dwNumPCA ) ) );
 }
 
+
+void CPRTMesh::ComputeShaderConstantsWithoutCompress(float* pSHCoeffsRed, float* pSHCoeffsGreen, float* pSHCoeffsBlue, DWORD dwNumCoeffsPerChannel)
+{
+    HRESULT hr;
+    assert(dwNumCoeffsPerChannel == m_pPRTCompBuffer->GetNumCoeffs());
+
+    UINT dwNumCoeffs = m_pPRTCompBuffer->GetNumCoeffs();
+    UINT dwOrder = m_dwPRTOrder;
+    UINT dwNumChannels = m_pPRTCompBuffer->GetNumChannels();
+    UINT dwNumClusters = m_pPRTCompBuffer->GetNumClusters();
+    UINT dwNumPCA = m_pPRTCompBuffer->GetNumPCA();
+    V(m_pPRTEffect->SetFloatArray("aPRTClusterBases", (float*)m_aPRTClusterBases, ((dwNumPCA + 1) * dwNumCoeffs * dwNumChannels)*dwNumClusters));
+
+}
 
 //--------------------------------------------------------------------------------------
 void CPRTMesh::RenderWithPRT(IDirect3DDevice9* pd3dDevice, D3DXMATRIX* pmWorldViewProj, bool bRenderWithAlbedo)
