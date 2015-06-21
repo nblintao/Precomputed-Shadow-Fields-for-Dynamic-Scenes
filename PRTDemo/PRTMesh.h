@@ -6,6 +6,12 @@
 #pragma once
 
 #include "DXUTcamera.h"
+#define SHADOWFIELD
+#define OUTPUTCUBEMAP
+#define CUBE_EDGELENGTH 64
+#define SPHERENUM 4
+#define LATNUM 3
+#define LNGNUM 3
 
 class Ball{
 public:

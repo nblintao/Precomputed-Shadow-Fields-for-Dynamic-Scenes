@@ -411,7 +411,7 @@ HRESULT CPRTMesh::GetCubeMap(IDirect3DDevice9* pd3dDevice)
 
     LPDIRECT3DCUBETEXTURE9 m_pCubeMap;
 
-    V(pd3dDevice->CreateCubeTexture(256, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &m_pCubeMap, NULL));
+    V(pd3dDevice->CreateCubeTexture(CUBE_EDGELENGTH, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &m_pCubeMap, NULL));
 
     //如果需要的话，深度缓冲也可以考虑在内。
     //IDirect3DSurface9*  g_pDepthCube = NULL;
@@ -423,7 +423,11 @@ HRESULT CPRTMesh::GetCubeMap(IDirect3DDevice9* pd3dDevice)
     pd3dDevice->GetTransform(D3DTS_PROJECTION, &oProj);
     pd3dDevice->GetTransform(D3DTS_WORLD, &oWorld);
 
-    // Cubemap使用的投影矩阵 
+    D3DXMATRIXA16 mWorld;
+    D3DXMatrixIdentity(&mWorld);
+    pd3dDevice->SetTransform(D3DTS_WORLD, &mWorld);
+
+    // Project matrix used by cubemap 
     D3DXMATRIXA16 mProj;
     D3DXMatrixPerspectiveFovLH(&mProj, D3DX_PI * 0.5f, 1.0f, 0.01f, 100.0f);
     pd3dDevice->SetTransform(D3DTS_PROJECTION, &mProj);
@@ -434,68 +438,88 @@ HRESULT CPRTMesh::GetCubeMap(IDirect3DDevice9* pd3dDevice)
     //LPDIRECT3DSURFACE9 pDSOld = NULL;
     //if( SUCCEEDED( pd3dDevice->GetDepthStencilSurface( &pDSOld ) ) ) 
     //{ 
-    //    // 如果使用深度缓冲 
+    //    // Depth Stencil is used
     //    V( pd3dDevice->SetDepthStencilSurface( g_pDepthCube ) ); 
     //}  
 
     SetupLights(pd3dDevice);
 
-#define SPHERENUM 16
+    //posX, negX, posY, negY, posZ, negZ
+    //for (UINT roughDir = 0; roughDir < 6; roughDir++) {
+    for (UINT latid = 0; latid < LATNUM; latid++){
+        FLOAT lat = D3DX_PI * (latid + 0.5f) / LATNUM;
+        for (UINT lngid = 0; lngid < LNGNUM; lngid++) {
+            FLOAT lng = D3DX_PI * 2 * lngid / LNGNUM;
 
-    FLOAT radius = 1.0f;
-    FLOAT distance;
-    //16 concentric spheres uniformly distributed between 0.2r and 8r
-    for (UINT sphereid = 0; sphereid < SPHERENUM; sphereid++) {
-    //for (INT sphereid = SPHERENUM; sphereid >=0; sphereid--) {
+            FLOAT nx, ny, nz;
+            nx = cos(lng);
+            nz = sin(lng);
+            ny = cos(lat);
 
-        distance = (0.2f + (8.0f - 0.2f)*sphereid / (SPHERENUM - 1))*radius;
-        //distance = 8.0f;
-        D3DXMATRIX m1;
-        D3DXMatrixTranslation(&m1, -distance, 0, 0);
-        pd3dDevice->SetTransform(D3DTS_WORLD, &m1);
+            FLOAT radius = 1.0f;
+            FLOAT distance;
+            //16 concentric spheres uniformly distributed between 0.2r and 8r
+            for (UINT sphereid = 0; sphereid < SPHERENUM; sphereid++) {
+                //for (INT sphereid = SPHERENUM; sphereid >=0; sphereid--) {
+                distance = (0.2f + (8.0f - 0.2f)*sphereid / (SPHERENUM - 1))*radius;
 
-        for (int nFace = 0; nFace < 6; ++nFace) //依次完成Cubemap中的六个面的绘制 
-        {
-            LPDIRECT3DSURFACE9 pSurf;
-            V(m_pCubeMap->GetCubeMapSurface((D3DCUBEMAP_FACES)nFace, 0, &pSurf));
-            V(pd3dDevice->SetRenderTarget(0, pSurf));
-            D3DXMATRIXA16 mView = DXUTGetCubeMapViewMatrix(nFace);
-            V(pd3dDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0));
-            V(pd3dDevice->SetTransform(D3DTS_VIEW, &mView));
+                D3DXMATRIX mSampler;
+                D3DXMatrixTranslation(&mSampler, distance*nx, distance*ny, distance*nz);
+                D3DXMatrixInverse(&mWorld, NULL, &mSampler);
+                pd3dDevice->SetTransform(D3DTS_WORLD, &mWorld);
 
 
-            if (SUCCEEDED(pd3dDevice->BeginScene())) {
-                //在这里绘制环境 
-                meshSphere->DrawSubset(0);
+                for (int nFace = 0; nFace < 6; ++nFace) //render 6 faces of cubemap 
+                {
+                    LPDIRECT3DSURFACE9 pSurf;
+                    V(m_pCubeMap->GetCubeMapSurface((D3DCUBEMAP_FACES)nFace, 0, &pSurf));
+                    V(pd3dDevice->SetRenderTarget(0, pSurf));
 
-                pd3dDevice->EndScene();
-            }
+                    D3DXMATRIXA16 mView = DXUTGetCubeMapViewMatrix(nFace);
+                    //D3DXMatrixMultiply(&mView, &mSampler, &mView);
+                    V(pd3dDevice->SetTransform(D3DTS_VIEW, &mView));
 
-            WCHAR addr[100];
-            wsprintfW(addr, L"D:\\CGDebug\\%02d%d.bmp", sphereid, nFace);
-            V(D3DXSaveSurfaceToFile(addr, D3DXIFF_BMP, pSurf, NULL, NULL));
+                    V(pd3dDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0));
 
-            SAFE_RELEASE(pSurf);
+                    if (SUCCEEDED(pd3dDevice->BeginScene())) {
+                        //render here 
+                        meshSphere->DrawSubset(0);
+                        //meshTeapot->DrawSubset(0);
 
-        }
+                        pd3dDevice->EndScene();
+                    }
+#ifdef OUTPUTCUBEMAP
+                    WCHAR addr[100];
+                    wsprintfW(addr, L"D:\\CGDebug\\%02d_%02d_%02d_%d.bmp", latid,lngid, sphereid, nFace);
+                    V(D3DXSaveSurfaceToFile(addr, D3DXIFF_BMP, pSurf, NULL, NULL));
+#endif
+                    SAFE_RELEASE(pSurf);
+
+                }
+
+                // A cubemap is finished here.
+
+                // Who can tell me why I get only pos-x suface here? (Lin TAO)
+                //D3DXSaveTextureToFile(L"D:\\haha.bmp", D3DXIFF_BMP, m_pCubeMap, NULL);
+
 #define PRTOrder 6
-        //FLOAT *pROut = NULL, *pGOut = NULL, *pBOut = NULL;
-        FLOAT pROut[PRTOrder*PRTOrder], pGOut[PRTOrder*PRTOrder], pBOut[PRTOrder*PRTOrder];
-        V(D3DXSHProjectCubeMap(PRTOrder, m_pCubeMap, pROut, pGOut, pBOut));
-        //printf("%f", pGOut[0]);
+                //FLOAT *pROut = NULL, *pGOut = NULL, *pBOut = NULL;
+                FLOAT pROut[PRTOrder*PRTOrder], pGOut[PRTOrder*PRTOrder], pBOut[PRTOrder*PRTOrder];
+                V(D3DXSHProjectCubeMap(PRTOrder, m_pCubeMap, pROut, pGOut, pBOut));
+                //printf("%f", pGOut[0]);
 
+            }
+        }
     }
+
     //Restore depth-stencil buffer and render target 
-    /*if( pDSOld )//如果使用深度缓冲
+    /*if( pDSOld )// Depth Stencil is used
     {
     V( pd3dDevice->SetDepthStencilSurface( pDSOld ) );
     SAFE_RELEASE( pDSOld );
     }*/
     V(pd3dDevice->SetRenderTarget(0, pRTOld));
     SAFE_RELEASE(pRTOld);
-
-    // Who can tell me why I get only pos-x suface here? (Lin TAO)
-    //D3DXSaveTextureToFile(L"D:\\haha.bmp", D3DXIFF_BMP, m_pCubeMap, NULL);
 
     pd3dDevice->SetTransform(D3DTS_VIEW, &oView);
     pd3dDevice->SetTransform(D3DTS_PROJECTION, &oProj);
@@ -517,6 +541,7 @@ HRESULT CPRTMesh::LoadMesh( IDirect3DDevice9* pd3dDevice, WCHAR* strMeshFileName
     WCHAR str[MAX_PATH];
     HRESULT hr;
 
+#ifdef SHADOWFIELD
     SAFE_RELEASE(meshTeapot);
     D3DXCreateTeapot(
         pd3dDevice, //D3D绘制对象  
@@ -536,7 +561,8 @@ HRESULT CPRTMesh::LoadMesh( IDirect3DDevice9* pd3dDevice, WCHAR* strMeshFileName
 
     SetUpBalls();
     GetCubeMap(pd3dDevice);
-    //RenderToCube(m_pd3dDevice, meshSphere);
+
+#endif
 
     // Release any previous mesh object
     SAFE_RELEASE( m_pMesh );
@@ -1228,7 +1254,7 @@ void CPRTMesh::ComputeShaderConstants( float* pSHCoeffsRed, float* pSHCoeffsGree
 //--------------------------------------------------------------------------------------
 void CPRTMesh::RenderWithPRT(IDirect3DDevice9* pd3dDevice, D3DXMATRIX* pmWorldViewProj, bool bRenderWithAlbedo)
 {
-
+#ifdef SHADOWFIELD
     SetupLights(pd3dDevice);
     D3DMATRIX tempWorld;
     pd3dDevice->GetTransform(D3DTS_WORLD, &tempWorld);
@@ -1245,10 +1271,10 @@ void CPRTMesh::RenderWithPRT(IDirect3DDevice9* pd3dDevice, D3DXMATRIX* pmWorldVi
         meshSphere->DrawSubset(0);
     }
 
-
-
     pd3dDevice->SetTransform(D3DTS_WORLD, &tempWorld);
-    
+
+#endif
+
     //for (int i = 0; i < 2; i++) {
     for (int i = 0; i < 1; i++) {
         D3DXMATRIX matWorld;//世界变换矩阵
