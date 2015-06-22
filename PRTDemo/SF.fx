@@ -15,9 +15,10 @@ texture AlbedoTexture;
 
 #define NUM_CHANNELS	3
 
-#define SPHERENUM 6
-#define LATNUM 6
-#define LNGNUM 6
+#define BALLNUM 2
+#define SPHERENUM 8
+#define LATNUM 5
+#define LNGNUM 5
 
 // The values for NUM_CLUSTERS, NUM_PCA and NUM_COEFFS are
 // defined by the app upon the D3DXCreateEffectFromFile() call.
@@ -27,11 +28,14 @@ float4 aPRTClusterBases[((NUM_PCA + 1) * NUM_COEFFS / 4 * NUM_CHANNELS)*NUM_CLUS
 
 float4 aOOFBuffer[LATNUM*LNGNUM*SPHERENUM * 3 * NUM_COEFFS/4];
 float4 aEnvSHCoeffs[NUM_COEFFS / 4 * 3];
-float4 aBallInfo[2];
+float4 aBallInfo[2*BALLNUM];
 
 float4 MaterialDiffuseColor = { 1.0f, 1.0f, 1.0f, 1.0f };
 
 #define PI 3.14159265359f
+#define TheTR BRDFR
+#define TheTG BRDFB
+#define TheTB BRDFB
 
 //-----------------------------------------------------------------------------
 sampler AlbedoSampler = sampler_state
@@ -54,6 +58,46 @@ struct VS_OUTPUT
 };
 
 
+float GetFieldOffset(float4 pos, int entityid)
+{
+    float4 relativePos = pos - aBallInfo[2 * entityid + 1];
+    float ballRadius = aBallInfo[2 * entityid + 0][0];
+
+    int sphereid = (length(relativePos) / ballRadius - 0.2) / ((8.0f - 0.2f) / (SPHERENUM - 1));
+    sphereid = clamp(sphereid, 0, SPHERENUM - 1);
+    //if (sphereid < 0)
+    //    sphereid = 0;
+    //else if (sphereid >= SPHERENUM)
+    //    sphereid = SPHERENUM - 1;
+    //return float4(1.0 * sphereid / SPHERENUM, 0, 0, 0);
+
+    int latid = floor(acos(normalize(relativePos).y) / PI*LATNUM);
+    //if (latid == 0)
+    //    return float4(0, 1, 0, 0);
+    //else if (latid == 1)
+    //    return float4(0, 0, 1, 0);
+    //else if (latid == 2)
+    //    return float4(0, 1, 1, 0);
+    //else
+    //return float4(1.0f * (latid+1) / 6, 0, 0, 0);
+    latid = clamp(latid, 0, LATNUM - 1);
+
+    float rate = atan2(relativePos.z, relativePos.x) / 2 / PI + 0.5;
+    //return float4(rate, 0, 0, 0);
+    int lngid = floor(rate*LNGNUM + 0.5);
+    if (lngid == LNGNUM)lngid = 0;
+    //return float4(1.0f*lngid / LNGNUM, 0, 0, 0);
+    lngid = clamp(lngid, 0, LNGNUM - 1);
+
+    //int latid = 1;
+    //int lngid = 2;
+    //int sphereid = 1;
+
+    return ((latid*LNGNUM + lngid)*SPHERENUM + sphereid) * 3 * NUM_COEFFS / 4;
+    //return float4(1.0*(envOffset)/ (LATNUM*LNGNUM*SPHERENUM * 3 * NUM_COEFFS / 4)/2+0.5f, 0, 0, 0);
+}
+
+
 //-----------------------------------------------------------------------------
 float4 GetPRTDiffuse(int iClusterOffset, float4 vPCAWeights[NUM_PCA / 4], float4 pos)
 {
@@ -69,17 +113,14 @@ float4 GetPRTDiffuse(int iClusterOffset, float4 vPCAWeights[NUM_PCA / 4], float4
     float4 BRDFR[NUM_COEFFS / 4];
     float4 BRDFG[NUM_COEFFS / 4];
     float4 BRDFB[NUM_COEFFS / 4];
+
+    float TheBR = 0, TheBG = 0, TheBB = 0;
     
     for (int k = 0; k < (NUM_COEFFS / 4); k++) {
         BRDFR[k] = aPRTClusterBases[0 * (NUM_COEFFS / 4) + k];
         BRDFG[k] = aPRTClusterBases[1 * (NUM_COEFFS / 4) + k];
         BRDFB[k] = aPRTClusterBases[2 * (NUM_COEFFS / 4) + k];
     }
-    //for (int k = 0; k < (NUM_COEFFS / 4); k++) {
-    //    BRDFR[k] = aPRTClusterBases[iClusterOffset + 0 * (NUM_COEFFS / 4) + k];
-    //    BRDFG[k] = aPRTClusterBases[iClusterOffset + 1 * (NUM_COEFFS / 4) + k];
-    //    BRDFB[k] = aPRTClusterBases[iClusterOffset + 2 * (NUM_COEFFS / 4) + k];
-    //}
 
     for (int j = 0; j < (NUM_PCA / 4); j++) {
         for (int s = 0; s < 4; s++) {
@@ -94,53 +135,38 @@ float4 GetPRTDiffuse(int iClusterOffset, float4 vPCAWeights[NUM_PCA / 4], float4
         }
     }
 
-    
-    float4 relativePos = pos - aBallInfo[1];
-    float ballRadius = aBallInfo[0][0];
+    // BRDF is finished. TheT is equal to BRDF.Tp = TripleProduct(Op, ~rho)
+
+
+    //TODO
+    //sort entities in order of increasing distance
+
+    for (int entityid = 0; entityid < BALLNUM; entityid++) {
+        //TODO
+        //If J is a light source
         
-    int sphereid = (length(relativePos)/ballRadius - 0.2)/((8.0f-0.2f)/(SPHERENUM-1));
-    sphereid = clamp(sphereid, 0, SPHERENUM - 1);
-    //if (sphereid < 0)
-    //    sphereid = 0;
-    //else if (sphereid >= SPHERENUM)
-    //    sphereid = SPHERENUM - 1;
-    //return float4(1.0 * sphereid / SPHERENUM, 0, 0, 0);
+        //query SRF array to get its SRF SJ(p)
+        float SRFoffset = GetFieldOffset(pos, entityid);
 
-    int latid = floor(acos(normalize(relativePos).y)/PI*LATNUM);
-    //if (latid == 0)
-    //    return float4(0, 1, 0, 0);
-    //else if (latid == 1)
-    //    return float4(0, 0, 1, 0);
-    //else if (latid == 2)
-    //    return float4(0, 1, 1, 0);
-    //else
-    //return float4(1.0f * (latid+1) / 6, 0, 0, 0);
-    latid = clamp(latid, 0, LATNUM - 1);
-    
-    float rate = atan2(relativePos.z, relativePos.x) / 2 / PI + 0.5;
-    //return float4(rate, 0, 0, 0);
-    int lngid = floor(rate*LNGNUM + 0.5);
-    if (lngid == LNGNUM)lngid = 0;
-    //return float4(1.0f*lngid / LNGNUM, 0, 0, 0);
-    lngid = clamp(lngid, 0, LNGNUM - 1);
-    
-    //int latid = 1;
-    //int lngid = 2;
-    //int sphereid = 1;
+        //TODO
+        //rotate SJ(p) to align with global coordinate frame
 
-    int envOffset = ((latid*LNGNUM + lngid)*SPHERENUM + sphereid) * 3 * NUM_COEFFS / 4;
-    //return float4(1.0*(envOffset)/ (LATNUM*LNGNUM*SPHERENUM * 3 * NUM_COEFFS / 4)/2+0.5f, 0, 0, 0);
-    float4 vDiffuse = float4(0,0,0,0);
-    for (int t = 0; t < (NUM_COEFFS / 4); t++) {
-        vDiffuse.r += dot(BRDFR[t], aOOFBuffer[envOffset + 0 * NUM_COEFFS / 4 + t]);
-        vDiffuse.g += dot(BRDFG[t], aOOFBuffer[envOffset + 1 * NUM_COEFFS / 4 + t]);
-        vDiffuse.b += dot(BRDFB[t], aOOFBuffer[envOffset + 2 * NUM_COEFFS / 4 + t]);
+        //Bp += DoubleProduct(SJ(p),Tp)
+        for (int t = 0; t < (NUM_COEFFS / 4); t++) {
+            TheBR += dot(aOOFBuffer[SRFoffset + 0 * NUM_COEFFS / 4 + t], TheTR[t]);
+            TheBG += dot(aOOFBuffer[SRFoffset + 1 * NUM_COEFFS / 4 + t], TheTG[t]);
+            TheBB += dot(aOOFBuffer[SRFoffset + 2 * NUM_COEFFS / 4 + t], TheTB[t]);
+        }
+
     }
-    //for (int t = 0; t < (NUM_COEFFS / 4); t++) {
-    //    vDiffuse.r += dot(BRDFR[t], aEnvSHCoeffs[0 * NUM_COEFFS / 4 + t]);
-    //    vDiffuse.g += dot(BRDFG[t], aEnvSHCoeffs[1 * NUM_COEFFS / 4 + t]);
-    //    vDiffuse.b += dot(BRDFB[t], aEnvSHCoeffs[2 * NUM_COEFFS / 4 + t]);
-    //}
+
+    //Bp += DoubleProduct(Sd, Tp)
+    float4 vDiffuse = float4(TheBR, TheBG, TheBB, 0);
+    for (int t = 0; t < (NUM_COEFFS / 4); t++) {
+        vDiffuse.r += dot(aEnvSHCoeffs[0 * NUM_COEFFS / 4 + t], TheTR[t]);
+        vDiffuse.g += dot(aEnvSHCoeffs[1 * NUM_COEFFS / 4 + t], TheTG[t]);
+        vDiffuse.b += dot(aEnvSHCoeffs[2 * NUM_COEFFS / 4 + t], TheTB[t]);
+    }
     return vDiffuse;
 }
 

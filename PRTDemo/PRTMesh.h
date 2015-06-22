@@ -8,11 +8,11 @@
 #include "DXUTcamera.h"
 #define SHADOWFIELD
 #define SHADOWFIELDPRE
-#define OUTPUTCUBEMAP
+//#define OUTPUTCUBEMAP
 #define CUBE_EDGELENGTH 64
-#define SPHERENUM 6
-#define LATNUM 6
-#define LNGNUM 6
+#define SPHERENUM 8
+#define LATNUM 5
+#define LNGNUM 5
 
 class Ball{
 public:
@@ -217,5 +217,6 @@ protected:
     ID3DXMesh* meshSphere;
 public:
     Ball* ballList[10];
-    UINT ballNum = 0;
+    INT ballNum = 0;
+    INT selectBall = -1;
 };

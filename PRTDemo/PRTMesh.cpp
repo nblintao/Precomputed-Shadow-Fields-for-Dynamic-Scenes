@@ -20,8 +20,8 @@ Ball::Ball(FLOAT r, D3DXVECTOR4 pos) :r(r), pos(pos)
 
 HRESULT CPRTMesh::SetUpBalls()
 {
-    ballList[0] = new Ball(1, D3DXVECTOR4(2.5f, 7.0f, 1.5f, 0));
-    ballList[1] = new Ball(1, D3DXVECTOR4(2.5f, 2.0f, 1.5f, 0));
+    ballList[0] = new Ball(1, D3DXVECTOR4(2.5f, 2.0f, 1.5f, 0));
+    ballList[1] = new Ball(1, D3DXVECTOR4(2.5f, 7.0f, 1.5f, 0));
     ballNum = 2;
     return S_OK;
 }
@@ -68,7 +68,7 @@ CPRTMesh::~CPRTMesh( void )
     SAFE_RELEASE( m_pLDPRTMesh );
     SAFE_RELEASE(meshTeapot);
     SAFE_RELEASE(meshSphere);
-    for (UINT i = 0; i < ballNum; i++) {
+    for (INT i = 0; i < ballNum; i++) {
         SAFE_DELETE(ballList[i]);
     }
     SAFE_DELETE(m_aOOFBuffer);
@@ -196,16 +196,30 @@ HRESULT AttribSortMesh( ID3DXMesh** ppInOutMesh )
     return S_OK;
 }
 
-VOID SetupLights(IDirect3DDevice9* g_pd3dDevice)
+VOID SetupLights(IDirect3DDevice9* g_pd3dDevice, char color = 'Y')
 {
     // Set up a material. The material here just has the diffuse and ambient
     // colors set to yellow. Note that only one material can be used at a time.
     D3DMATERIAL9 mtrl;
     ZeroMemory(&mtrl, sizeof(D3DMATERIAL9));
-    mtrl.Diffuse.r = mtrl.Ambient.r = 1.0f;
-    mtrl.Diffuse.g = mtrl.Ambient.g = 1.0f;
+    mtrl.Diffuse.r = mtrl.Ambient.r = 0.0f;
+    mtrl.Diffuse.g = mtrl.Ambient.g = 0.0f;
     mtrl.Diffuse.b = mtrl.Ambient.b = 0.0f;
     mtrl.Diffuse.a = mtrl.Ambient.a = 1.0f;
+    switch (color) {
+        case 'Y':
+            mtrl.Diffuse.r = mtrl.Ambient.r = 1.0f;
+            mtrl.Diffuse.g = mtrl.Ambient.g = 1.0f;
+            break;
+        case 'R':
+            mtrl.Diffuse.r = mtrl.Ambient.r = 1.0f;
+            break;
+        case 'B':
+            mtrl.Diffuse.b = mtrl.Ambient.b = 1.0f;
+            break;
+        default:
+            break;
+    }
     g_pd3dDevice->SetMaterial(&mtrl);
 
     // Set up a white, directional light, with an oscillating direction.
@@ -499,9 +513,9 @@ HRESULT CPRTMesh::GetCubeMap(IDirect3DDevice9* pd3dDevice)
                         pd3dDevice->EndScene();
                     }
 #ifdef OUTPUTCUBEMAP
-                    //WCHAR addr[100];
-                    //wsprintfW(addr, L"D:\\CGDebug\\%02d_%02d_%02d_%d.bmp", latid,lngid, sphereid, nFace);
-                    //V(D3DXSaveSurfaceToFile(addr, D3DXIFF_BMP, pSurf, NULL, NULL));
+                    WCHAR addr[100];
+                    wsprintfW(addr, L"D:\\CGDebug\\%02d_%02d_%02d_%d.bmp", latid,lngid, sphereid, nFace);
+                    V(D3DXSaveSurfaceToFile(addr, D3DXIFF_BMP, pSurf, NULL, NULL));
 #endif
                     SAFE_RELEASE(pSurf);
 
@@ -1054,8 +1068,9 @@ HRESULT CPRTMesh::LoadEffects( IDirect3DDevice9* pd3dDevice, const D3DCAPS9* pDe
     if( FAILED( hr ) )
         return DXTRACE_ERR( TEXT( "ValidateTechnique" ), hr );
 
+#ifdef SHADOWFIELD
     GetCubeMap(pd3dDevice);
-    
+#endif 
 
     V( DXUTFindDXSDKMediaFileCch( str, MAX_PATH, TEXT( "NdotL.fx" ) ) );
     V( D3DXCreateEffectFromFile( pd3dDevice, str, NULL, NULL,
@@ -1313,13 +1328,15 @@ void CPRTMesh::ComputeShaderConstantsWithoutCompress(float* pSHCoeffsRed, float*
     V(m_pPRTEffect->SetFloatArray("aEnvSHCoeffs", (float*)m_aEnvSHCoeffs, dwNumCoeffs * 3));
     SAFE_DELETE(m_aEnvSHCoeffs);
 
-    FLOAT *m_aBallInfo = new FLOAT[8];
-    m_aBallInfo[0] = ballList[1]->r;
-    m_aBallInfo[4] = ballList[1]->pos.x;
-    m_aBallInfo[5] = ballList[1]->pos.y;
-    m_aBallInfo[6] = ballList[1]->pos.z;
-    m_aBallInfo[7] = 0;
-    V(m_pPRTEffect->SetFloatArray("aBallInfo", (float*)m_aBallInfo, 8));
+    FLOAT *m_aBallInfo = new FLOAT[8*ballNum];
+    for (INT i = 0; i < ballNum; i++) {
+        m_aBallInfo[i * 8 + 0] = ballList[i]->r;
+        m_aBallInfo[i * 8 + 4] = ballList[i]->pos.x;
+        m_aBallInfo[i * 8 + 5] = ballList[i]->pos.y;
+        m_aBallInfo[i * 8 + 6] = ballList[i]->pos.z;
+        m_aBallInfo[i * 8 + 7] = 0;
+    }
+    V(m_pPRTEffect->SetFloatArray("aBallInfo", (float*)m_aBallInfo, 8 * ballNum));
 
     SAFE_DELETE(m_aBallInfo);
 
@@ -1333,7 +1350,14 @@ void CPRTMesh::RenderWithPRT(IDirect3DDevice9* pd3dDevice, D3DXMATRIX* pmWorldVi
     D3DMATRIX tempWorld;
     pd3dDevice->GetTransform(D3DTS_WORLD, &tempWorld);
 
-    for (UINT i = 0; i < ballNum; i++) {
+    for (INT i = 0; i < ballNum; i++) {
+        if (i == selectBall) {
+            SetupLights(pd3dDevice, 'B');
+        }
+        else {
+            SetupLights(pd3dDevice, 'Y');
+        }
+
         D3DXMATRIX m1,m2;
         Ball* ball = ballList[i];
         FLOAT radius = ball->r;

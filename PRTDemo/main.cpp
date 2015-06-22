@@ -1398,9 +1398,13 @@ void CALLBACK KeyboardProc( UINT nChar, bool bKeyDown, bool bAltDown, void* pUse
             case 'P':
             {
                         Ball** ballList = g_PRTMesh.ballList;
-                        UINT ballNum = g_PRTMesh.ballNum;
+                        INT ballNum = g_PRTMesh.ballNum;
+                        INT selectBall = g_PRTMesh.selectBall;
                         if (ballList)
-                        for (UINT i = 0; i < ballNum; i++) {
+                        for (INT i = 0; i < ballNum; i++) {
+                            if (selectBall != -1 && selectBall != i)
+                                continue;
+
                             if (nChar == 'J')
                                 ballList[i]->pos.x -= 1;
                             else if (nChar == 'L')
@@ -1415,6 +1419,39 @@ void CALLBACK KeyboardProc( UINT nChar, bool bKeyDown, bool bAltDown, void* pUse
                                 ballList[i]->pos.z -= 1;
                         }
                         
+                        break;
+            }
+            case 'N':
+            case 'M':
+            {
+                        Ball** ballList = g_PRTMesh.ballList;
+                        INT ballNum = g_PRTMesh.ballNum;
+                        INT selectBall = g_PRTMesh.selectBall;
+                        if (ballList)
+                        for (INT i = 0; i < ballNum; i++) {
+                            if (selectBall != -1 && selectBall != i)
+                                continue;
+
+                            if (nChar == 'N')
+                                ballList[i]->r -= 1;
+                            else if (nChar == 'M')
+                                ballList[i]->r += 1;
+                        }
+
+                        break;
+            }
+            case 'Q':
+            {
+                        g_PRTMesh.selectBall += 1;
+                        if (g_PRTMesh.selectBall == g_PRTMesh.ballNum)
+                            g_PRTMesh.selectBall = -1;
+                        break;
+            }
+            case 'A':
+            {
+                        g_PRTMesh.selectBall -= 1;
+                        if (g_PRTMesh.selectBall < -1)
+                            g_PRTMesh.selectBall = -1;
                         break;
             }
                 // Demo hotkeys
