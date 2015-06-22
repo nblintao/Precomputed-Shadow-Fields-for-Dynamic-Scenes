@@ -1313,6 +1313,16 @@ void CPRTMesh::ComputeShaderConstantsWithoutCompress(float* pSHCoeffsRed, float*
     V(m_pPRTEffect->SetFloatArray("aEnvSHCoeffs", (float*)m_aEnvSHCoeffs, dwNumCoeffs * 3));
     SAFE_DELETE(m_aEnvSHCoeffs);
 
+    FLOAT *m_aBallInfo = new FLOAT[8];
+    m_aBallInfo[0] = ballList[1]->r;
+    m_aBallInfo[4] = ballList[1]->pos.x;
+    m_aBallInfo[5] = ballList[1]->pos.y;
+    m_aBallInfo[6] = ballList[1]->pos.z;
+    m_aBallInfo[7] = 0;
+    V(m_pPRTEffect->SetFloatArray("aBallInfo", (float*)m_aBallInfo, 8));
+
+    SAFE_DELETE(m_aBallInfo);
+
 }
 
 //--------------------------------------------------------------------------------------

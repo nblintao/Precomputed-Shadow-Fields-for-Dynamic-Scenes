@@ -215,6 +215,7 @@ protected:
 
     ID3DXMesh* meshTeapot;
     ID3DXMesh* meshSphere;
+public:
     Ball* ballList[10];
     UINT ballNum = 0;
 };

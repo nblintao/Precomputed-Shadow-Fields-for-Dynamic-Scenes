@@ -27,6 +27,7 @@ float4 aPRTClusterBases[((NUM_PCA + 1) * NUM_COEFFS / 4 * NUM_CHANNELS)*NUM_CLUS
 
 float4 aOOFBuffer[LATNUM*LNGNUM*SPHERENUM * 3 * NUM_COEFFS/4];
 float4 aEnvSHCoeffs[NUM_COEFFS / 4 * 3];
+float4 aBallInfo[2];
 
 float4 MaterialDiffuseColor = { 1.0f, 1.0f, 1.0f, 1.0f };
 
@@ -53,7 +54,7 @@ struct VS_OUTPUT
 
 
 //-----------------------------------------------------------------------------
-float4 GetPRTDiffuse(int iClusterOffset, float4 vPCAWeights[NUM_PCA / 4])
+float4 GetPRTDiffuse(int iClusterOffset, float4 vPCAWeights[NUM_PCA / 4], float4 pos)
 {
     // With compressed PRT, a single diffuse channel is caluated by:
     //       R[p] = (M[k] dot L') + sum( w[p][j] * (B[k][j] dot L');
@@ -92,11 +93,28 @@ float4 GetPRTDiffuse(int iClusterOffset, float4 vPCAWeights[NUM_PCA / 4])
         }
     }
 
+    
+    float4 relativePos = aBallInfo[1] - pos;
+    float ballRadius = aBallInfo[0][0];
+    
+    //return relativePos;
+    //return float4(length(relativePos) / 50, 0, 0, 0);
+    
     int latid = 1;
     int lngid = 2;
-    int sphereid = 1;
+
+    int sphereid = (length(relativePos)/ballRadius - 0.2)/((8.0-0.2)/(SPHERENUM-1));
+    //return float4(length(relativePos) / ballRadius / 8, 0, 0, 0);
+    if (sphereid < 0)
+        sphereid = 0;
+    else if (sphereid >= 4)
+        sphereid = 3;
+
+    ////int latid = 1;
+    ////int lngid = 2;
+    ////int sphereid = 1;
+
     int envOffset = ((latid*LNGNUM + lngid)*SPHERENUM + sphereid) * 3 * NUM_COEFFS / 4;
-        
 
     float4 vDiffuse = float4(0,0,0,0);
     for (int t = 0; t < (NUM_COEFFS / 4); t++) {
@@ -173,7 +191,7 @@ VS_OUTPUT PRTDiffuseVS(float4 vPos : POSITION,
 
     // For spectral simulations the material properity is baked into the transfer coefficients.
     // If using nonspectral, then you can modulate by the diffuse material properity here.
-    Output.Diffuse = GetPRTDiffuse(iClusterOffset, vPCAWeights);
+    Output.Diffuse = GetPRTDiffuse(iClusterOffset, vPCAWeights, vPos);
     //Output.Diffuse = OldGetPRTDiffuse(0, vPCAWeights);
 
     Output.Diffuse *= MaterialDiffuseColor;

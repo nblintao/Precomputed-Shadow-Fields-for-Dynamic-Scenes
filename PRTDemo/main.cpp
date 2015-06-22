@@ -1390,6 +1390,33 @@ void CALLBACK KeyboardProc( UINT nChar, bool bKeyDown, bool bAltDown, void* pUse
     {
         switch( nChar )
         {
+            case 'J':
+            case 'L':
+            case 'I':
+            case 'K':
+            case 'O':
+            case 'P':
+            {
+                        Ball** ballList = g_PRTMesh.ballList;
+                        UINT ballNum = g_PRTMesh.ballNum;
+                        if (ballList)
+                        for (UINT i = 0; i < ballNum; i++) {
+                            if (nChar == 'J')
+                                ballList[i]->pos.x -= 1;
+                            else if (nChar == 'L')
+                                ballList[i]->pos.x += 1;
+                            else if (nChar == 'I')
+                                ballList[i]->pos.y += 1;
+                            else if (nChar == 'K')
+                                ballList[i]->pos.y -= 1;
+                            else if (nChar == 'O')
+                                ballList[i]->pos.z += 1;
+                            else if (nChar == 'P')
+                                ballList[i]->pos.z -= 1;
+                        }
+                        
+                        break;
+            }
                 // Demo hotkeys
             case 'Z':
             {
