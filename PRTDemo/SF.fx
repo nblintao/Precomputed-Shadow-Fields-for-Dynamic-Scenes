@@ -15,9 +15,9 @@ texture AlbedoTexture;
 
 #define NUM_CHANNELS	3
 
-#define SPHERENUM 4
-#define LATNUM 3
-#define LNGNUM 3
+#define SPHERENUM 6
+#define LATNUM 6
+#define LNGNUM 6
 
 // The values for NUM_CLUSTERS, NUM_PCA and NUM_COEFFS are
 // defined by the app upon the D3DXCreateEffectFromFile() call.
@@ -31,6 +31,7 @@ float4 aBallInfo[2];
 
 float4 MaterialDiffuseColor = { 1.0f, 1.0f, 1.0f, 1.0f };
 
+#define PI 3.14159265359f
 
 //-----------------------------------------------------------------------------
 sampler AlbedoSampler = sampler_state
@@ -94,28 +95,41 @@ float4 GetPRTDiffuse(int iClusterOffset, float4 vPCAWeights[NUM_PCA / 4], float4
     }
 
     
-    float4 relativePos = aBallInfo[1] - pos;
+    float4 relativePos = pos - aBallInfo[1];
     float ballRadius = aBallInfo[0][0];
-    
-    //return relativePos;
-    //return float4(length(relativePos) / 50, 0, 0, 0);
-    
-    int latid = 1;
-    int lngid = 2;
+        
+    int sphereid = (length(relativePos)/ballRadius - 0.2)/((8.0f-0.2f)/(SPHERENUM-1));
+    sphereid = clamp(sphereid, 0, SPHERENUM - 1);
+    //if (sphereid < 0)
+    //    sphereid = 0;
+    //else if (sphereid >= SPHERENUM)
+    //    sphereid = SPHERENUM - 1;
+    //return float4(1.0 * sphereid / SPHERENUM, 0, 0, 0);
 
-    int sphereid = (length(relativePos)/ballRadius - 0.2)/((8.0-0.2)/(SPHERENUM-1));
-    //return float4(length(relativePos) / ballRadius / 8, 0, 0, 0);
-    if (sphereid < 0)
-        sphereid = 0;
-    else if (sphereid >= 4)
-        sphereid = 3;
-
-    ////int latid = 1;
-    ////int lngid = 2;
-    ////int sphereid = 1;
+    int latid = floor(acos(normalize(relativePos).y)/PI*LATNUM);
+    //if (latid == 0)
+    //    return float4(0, 1, 0, 0);
+    //else if (latid == 1)
+    //    return float4(0, 0, 1, 0);
+    //else if (latid == 2)
+    //    return float4(0, 1, 1, 0);
+    //else
+    //return float4(1.0f * (latid+1) / 6, 0, 0, 0);
+    latid = clamp(latid, 0, LATNUM - 1);
+    
+    float rate = atan2(relativePos.z, relativePos.x) / 2 / PI + 0.5;
+    //return float4(rate, 0, 0, 0);
+    int lngid = floor(rate*LNGNUM + 0.5);
+    if (lngid == LNGNUM)lngid = 0;
+    //return float4(1.0f*lngid / LNGNUM, 0, 0, 0);
+    lngid = clamp(lngid, 0, LNGNUM - 1);
+    
+    //int latid = 1;
+    //int lngid = 2;
+    //int sphereid = 1;
 
     int envOffset = ((latid*LNGNUM + lngid)*SPHERENUM + sphereid) * 3 * NUM_COEFFS / 4;
-
+    //return float4(1.0*(envOffset)/ (LATNUM*LNGNUM*SPHERENUM * 3 * NUM_COEFFS / 4)/2+0.5f, 0, 0, 0);
     float4 vDiffuse = float4(0,0,0,0);
     for (int t = 0; t < (NUM_COEFFS / 4); t++) {
         vDiffuse.r += dot(BRDFR[t], aOOFBuffer[envOffset + 0 * NUM_COEFFS / 4 + t]);

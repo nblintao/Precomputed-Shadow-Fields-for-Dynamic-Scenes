@@ -10,9 +10,9 @@
 #define SHADOWFIELDPRE
 #define OUTPUTCUBEMAP
 #define CUBE_EDGELENGTH 64
-#define SPHERENUM 4
-#define LATNUM 3
-#define LNGNUM 3
+#define SPHERENUM 6
+#define LATNUM 6
+#define LNGNUM 6
 
 class Ball{
 public:

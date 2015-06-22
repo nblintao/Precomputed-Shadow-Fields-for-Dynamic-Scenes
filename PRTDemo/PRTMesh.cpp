@@ -469,7 +469,7 @@ HRESULT CPRTMesh::GetCubeMap(IDirect3DDevice9* pd3dDevice)
             FLOAT radius = 1.0f;
             FLOAT distance;
             //16 concentric spheres uniformly distributed between 0.2r and 8r
-            for (UINT sphereid = 1; sphereid < SPHERENUM; sphereid++) {
+            for (UINT sphereid = 0; sphereid < SPHERENUM; sphereid++) {
                 //for (INT sphereid = SPHERENUM; sphereid >=0; sphereid--) {
                 distance = (0.2f + (8.0f - 0.2f)*sphereid / (SPHERENUM - 1))*radius;
 
