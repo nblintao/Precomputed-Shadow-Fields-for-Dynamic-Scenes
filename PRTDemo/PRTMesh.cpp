@@ -541,7 +541,6 @@ HRESULT CPRTMesh::LoadMesh( IDirect3DDevice9* pd3dDevice, WCHAR* strMeshFileName
     WCHAR str[MAX_PATH];
     HRESULT hr;
 
-#ifdef SHADOWFIELDPRE
     SAFE_RELEASE(meshTeapot);
     D3DXCreateTeapot(
         pd3dDevice, //D3D绘制对象  
@@ -560,8 +559,8 @@ HRESULT CPRTMesh::LoadMesh( IDirect3DDevice9* pd3dDevice, WCHAR* strMeshFileName
         );
 
     SetUpBalls();
+#ifdef SHADOWFIELDPRE
     GetCubeMap(pd3dDevice);
-
 #endif
 
     // Release any previous mesh object
@@ -1239,8 +1238,11 @@ void CPRTMesh::ComputeShaderConstants( float* pSHCoeffsRed, float* pSHCoeffsGree
     for( DWORD iCluster = 0; iCluster < dwNumClusters; iCluster++ )
     {
         // For each cluster, store L' dot M[k] per channel, where M[k] is the mean of cluster k
-        m_aPRTConstants[iCluster * dwClusterStride + 0] = D3DXSHDot( dwOrder, &m_aPRTClusterBases[iCluster *
-                                                                     dwBasisStride + 0 * dwNumCoeffs], pSHCoeffsRed );
+        //m_aPRTConstants[iCluster * dwClusterStride + 0] = 0;
+        //for (UINT i = 0; i < dwOrder*dwOrder; i++) {
+        //    m_aPRTConstants[iCluster * dwClusterStride + 0] += m_aPRTClusterBases[iCluster * dwBasisStride + 0 * dwNumCoeffs + i] * pSHCoeffsRed[i];
+        //}
+        m_aPRTConstants[iCluster * dwClusterStride + 0] = D3DXSHDot( dwOrder, &m_aPRTClusterBases[iCluster * dwBasisStride + 0 * dwNumCoeffs], pSHCoeffsRed );
         m_aPRTConstants[iCluster * dwClusterStride + 1] = D3DXSHDot( dwOrder, &m_aPRTClusterBases[iCluster *
                                                                      dwBasisStride + 1 * dwNumCoeffs],
                                                                      pSHCoeffsGreen );
@@ -1286,7 +1288,7 @@ void CPRTMesh::ComputeShaderConstantsWithoutCompress(float* pSHCoeffsRed, float*
         m_aEnvSHCoeffs[1 * dwNumCoeffs + i] = pSHCoeffsGreen[i];
         m_aEnvSHCoeffs[2 * dwNumCoeffs + i] = pSHCoeffsBlue[i];
     }
-    V(m_pPRTEffect->SetFloatArray("aEnvSHCoeffs", (float*)m_aPRTClusterBases, dwNumCoeffs*3));
+    V(m_pPRTEffect->SetFloatArray("aEnvSHCoeffs", (float*)m_aEnvSHCoeffs, dwNumCoeffs * 3));
     SAFE_DELETE(m_aEnvSHCoeffs);
 
 }

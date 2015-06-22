@@ -1205,9 +1205,9 @@ void UpdateLightingEnvironment()
     D3DXSHAdd( fSum[2], dwOrder, fSum[2], fLightProbe2Rot[2] );
 //#ifndef SHADOWFIELD
     g_PRTMesh.ComputeShaderConstants( fSum[0], fSum[1], fSum[2], dwOrder * dwOrder );
-//#else
+#ifdef SHADOWFIELD
     g_PRTMesh.ComputeShaderConstantsWithoutCompress(fSum[0], fSum[1], fSum[2], dwOrder * dwOrder);
-//#endif
+#endif
     g_PRTMesh.ComputeSHIrradEnvMapConstants( fSum[0], fSum[1], fSum[2] );
     g_PRTMesh.ComputeLDPRTConstants( fSum[0], fSum[1], fSum[2], dwOrder * dwOrder );
 }
