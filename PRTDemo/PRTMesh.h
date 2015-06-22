@@ -7,7 +7,7 @@
 
 #include "DXUTcamera.h"
 #define SHADOWFIELD
-//#define SHADOWFIELDPRE
+#define SHADOWFIELDPRE
 #define OUTPUTCUBEMAP
 #define CUBE_EDGELENGTH 64
 #define SPHERENUM 4
@@ -201,6 +201,7 @@ protected:
     // have up to NUM_PCA_VECTORS of PCA vectors.  Each cluster also has 
     // a mean PCA vector which is described with 4 floats (and hence the +4).
     float* m_aPRTConstants;
+    FLOAT *m_aOOFBuffer;
 
     ///////////
     // LDPRT

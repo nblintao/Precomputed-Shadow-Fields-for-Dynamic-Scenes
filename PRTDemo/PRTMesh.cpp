@@ -20,8 +20,8 @@ Ball::Ball(FLOAT r, D3DXVECTOR4 pos) :r(r), pos(pos)
 
 HRESULT CPRTMesh::SetUpBalls()
 {
-    ballList[0] = new Ball(1, D3DXVECTOR4(0.5f, 7.0f, 1.5f, 0));
-    ballList[1] = new Ball(1, D3DXVECTOR4(0.5f, 2.0f, 1.5f, 0));
+    ballList[0] = new Ball(1, D3DXVECTOR4(2.5f, 7.0f, 1.5f, 0));
+    ballList[1] = new Ball(1, D3DXVECTOR4(2.5f, 2.0f, 1.5f, 0));
     ballNum = 2;
     return S_OK;
 }
@@ -71,6 +71,7 @@ CPRTMesh::~CPRTMesh( void )
     for (UINT i = 0; i < ballNum; i++) {
         SAFE_DELETE(ballList[i]);
     }
+    SAFE_DELETE(m_aOOFBuffer);
 }
 
 
@@ -444,6 +445,15 @@ HRESULT CPRTMesh::GetCubeMap(IDirect3DDevice9* pd3dDevice)
 
     SetupLights(pd3dDevice);
 
+    UINT m_dwPRTOrder = GetOrderFromNumCoeffs(m_pPRTBuffer->GetNumCoeffs());
+    //UINT m_dwPRTOrder = 6;
+
+    //m_aOOFBuffer = new FLOAT(LATNUM*LNGNUM*SPHERENUM * 3 * m_dwPRTOrder*m_dwPRTOrder);
+    m_aOOFBuffer = new FLOAT[LATNUM*LNGNUM*SPHERENUM * 3 * m_dwPRTOrder*m_dwPRTOrder];
+    UINT chanelOffset = m_dwPRTOrder*m_dwPRTOrder;
+    UINT indexOOFBuffer = 0;
+
+
     //posX, negX, posY, negY, posZ, negZ
     //for (UINT roughDir = 0; roughDir < 6; roughDir++) {
     for (UINT latid = 0; latid < LATNUM; latid++){
@@ -459,7 +469,7 @@ HRESULT CPRTMesh::GetCubeMap(IDirect3DDevice9* pd3dDevice)
             FLOAT radius = 1.0f;
             FLOAT distance;
             //16 concentric spheres uniformly distributed between 0.2r and 8r
-            for (UINT sphereid = 0; sphereid < SPHERENUM; sphereid++) {
+            for (UINT sphereid = 1; sphereid < SPHERENUM; sphereid++) {
                 //for (INT sphereid = SPHERENUM; sphereid >=0; sphereid--) {
                 distance = (0.2f + (8.0f - 0.2f)*sphereid / (SPHERENUM - 1))*radius;
 
@@ -489,9 +499,9 @@ HRESULT CPRTMesh::GetCubeMap(IDirect3DDevice9* pd3dDevice)
                         pd3dDevice->EndScene();
                     }
 #ifdef OUTPUTCUBEMAP
-                    WCHAR addr[100];
-                    wsprintfW(addr, L"D:\\CGDebug\\%02d_%02d_%02d_%d.bmp", latid,lngid, sphereid, nFace);
-                    V(D3DXSaveSurfaceToFile(addr, D3DXIFF_BMP, pSurf, NULL, NULL));
+                    //WCHAR addr[100];
+                    //wsprintfW(addr, L"D:\\CGDebug\\%02d_%02d_%02d_%d.bmp", latid,lngid, sphereid, nFace);
+                    //V(D3DXSaveSurfaceToFile(addr, D3DXIFF_BMP, pSurf, NULL, NULL));
 #endif
                     SAFE_RELEASE(pSurf);
 
@@ -501,16 +511,25 @@ HRESULT CPRTMesh::GetCubeMap(IDirect3DDevice9* pd3dDevice)
 
                 // Who can tell me why I get only pos-x suface here? (Lin TAO)
                 //D3DXSaveTextureToFile(L"D:\\haha.bmp", D3DXIFF_BMP, m_pCubeMap, NULL);
+                
+               
+                V(D3DXSHProjectCubeMap(m_dwPRTOrder, m_pCubeMap, &m_aOOFBuffer[indexOOFBuffer + 0 * chanelOffset], &m_aOOFBuffer[indexOOFBuffer + 1 * chanelOffset], &m_aOOFBuffer[indexOOFBuffer + 2 * chanelOffset]));
+                //FLOAT ROut[36], GOut[36], BOut[36];
+                //V(D3DXSHProjectCubeMap(m_dwPRTOrder, m_pCubeMap, ROut,GOut,BOut));
+                //memcpy(&(m_aOOFBuffer[indexOOFBuffer + 0 * chanelOffset]), ROut, sizeof(ROut));
+                //memcpy(&(m_aOOFBuffer[indexOOFBuffer + 0 * chanelOffset]), GOut, sizeof(ROut));
+                //memcpy(&(m_aOOFBuffer[indexOOFBuffer + 0 * chanelOffset]), BOut, sizeof(ROut));
 
-#define PRTOrder 6
-                //FLOAT *pROut = NULL, *pGOut = NULL, *pBOut = NULL;
-                FLOAT pROut[PRTOrder*PRTOrder], pGOut[PRTOrder*PRTOrder], pBOut[PRTOrder*PRTOrder];
-                V(D3DXSHProjectCubeMap(PRTOrder, m_pCubeMap, pROut, pGOut, pBOut));
-                //printf("%f", pGOut[0]);
+                indexOOFBuffer += 3 * chanelOffset;               
 
             }
         }
     }
+    
+
+    V(m_pPRTEffect->SetFloatArray("aOOFBuffer", (float*)m_aOOFBuffer, LATNUM*LNGNUM*SPHERENUM * 3 * m_dwPRTOrder*m_dwPRTOrder));
+
+    SAFE_DELETE(m_aOOFBuffer);
 
     //Restore depth-stencil buffer and render target 
     /*if( pDSOld )// Depth Stencil is used
@@ -559,9 +578,9 @@ HRESULT CPRTMesh::LoadMesh( IDirect3DDevice9* pd3dDevice, WCHAR* strMeshFileName
         );
 
     SetUpBalls();
-#ifdef SHADOWFIELDPRE
-    GetCubeMap(pd3dDevice);
-#endif
+//#ifdef SHADOWFIELDPRE
+//    GetCubeMap(pd3dDevice);
+//#endif
 
     // Release any previous mesh object
     SAFE_RELEASE( m_pMesh );
@@ -1034,6 +1053,9 @@ HRESULT CPRTMesh::LoadEffects( IDirect3DDevice9* pd3dDevice, const D3DCAPS9* pDe
     hr = m_pPRTEffect->ValidateTechnique( "RenderWithPRTColorLights" );
     if( FAILED( hr ) )
         return DXTRACE_ERR( TEXT( "ValidateTechnique" ), hr );
+
+    GetCubeMap(pd3dDevice);
+    
 
     V( DXUTFindDXSDKMediaFileCch( str, MAX_PATH, TEXT( "NdotL.fx" ) ) );
     V( D3DXCreateEffectFromFile( pd3dDevice, str, NULL, NULL,

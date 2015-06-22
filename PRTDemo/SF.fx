@@ -14,14 +14,22 @@ float4x4 g_mWorldViewProjection;
 texture AlbedoTexture;
 
 #define NUM_CHANNELS	3
+
+#define SPHERENUM 4
+#define LATNUM 3
+#define LNGNUM 3
+
 // The values for NUM_CLUSTERS, NUM_PCA and NUM_COEFFS are
 // defined by the app upon the D3DXCreateEffectFromFile() call.
 
 float4 aPRTConstants[NUM_CLUSTERS*(1 + NUM_CHANNELS*(NUM_PCA / 4))];
 float4 aPRTClusterBases[((NUM_PCA + 1) * NUM_COEFFS / 4 * NUM_CHANNELS)*NUM_CLUSTERS];
+
+float4 aOOFBuffer[LATNUM*LNGNUM*SPHERENUM * 3 * NUM_COEFFS/4];
 float4 aEnvSHCoeffs[NUM_COEFFS / 4 * 3];
 
 float4 MaterialDiffuseColor = { 1.0f, 1.0f, 1.0f, 1.0f };
+
 
 //-----------------------------------------------------------------------------
 sampler AlbedoSampler = sampler_state
@@ -84,13 +92,23 @@ float4 GetPRTDiffuse(int iClusterOffset, float4 vPCAWeights[NUM_PCA / 4])
         }
     }
 
+    int latid = 1;
+    int lngid = 2;
+    int sphereid = 1;
+    int envOffset = ((latid*LNGNUM + lngid)*SPHERENUM + sphereid) * 3 * NUM_COEFFS / 4;
+        
+
     float4 vDiffuse = float4(0,0,0,0);
     for (int t = 0; t < (NUM_COEFFS / 4); t++) {
-        vDiffuse.r += dot(BRDFR[t], aEnvSHCoeffs[0 * NUM_COEFFS / 4 + t]);
-        vDiffuse.g += dot(BRDFG[t], aEnvSHCoeffs[1 * NUM_COEFFS / 4 + t]);
-        vDiffuse.b += dot(BRDFB[t], aEnvSHCoeffs[2 * NUM_COEFFS / 4 + t]);
+        vDiffuse.r += dot(BRDFR[t], aOOFBuffer[envOffset + 0 * NUM_COEFFS / 4 + t]);
+        vDiffuse.g += dot(BRDFG[t], aOOFBuffer[envOffset + 1 * NUM_COEFFS / 4 + t]);
+        vDiffuse.b += dot(BRDFB[t], aOOFBuffer[envOffset + 2 * NUM_COEFFS / 4 + t]);
     }
-
+    //for (int t = 0; t < (NUM_COEFFS / 4); t++) {
+    //    vDiffuse.r += dot(BRDFR[t], aEnvSHCoeffs[0 * NUM_COEFFS / 4 + t]);
+    //    vDiffuse.g += dot(BRDFG[t], aEnvSHCoeffs[1 * NUM_COEFFS / 4 + t]);
+    //    vDiffuse.b += dot(BRDFB[t], aEnvSHCoeffs[2 * NUM_COEFFS / 4 + t]);
+    //}
     return vDiffuse;
 }
 
