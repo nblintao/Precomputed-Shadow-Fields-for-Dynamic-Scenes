@@ -7,19 +7,25 @@
 
 #include "DXUTcamera.h"
 #define SHADOWFIELD
-#define SHADOWFIELDPRE
 //#define OUTPUTCUBEMAP
-#define CUBE_EDGELENGTH 64
+//#define USINGTEAPOT
+#define CUBE_EDGELENGTH 16
 #define SPHERENUM 8
 #define LATNUM 5
 #define LNGNUM 5
 
+typedef enum{
+    LIGHT,
+    OBJECT
+} BallType;
+
 class Ball{
 public:
-    Ball(FLOAT r, D3DXVECTOR4 pos);
+    Ball(FLOAT r, D3DXVECTOR4 pos, BallType type);
     //~Ball();
     FLOAT r;
     D3DXVECTOR4 pos;
+    BallType type;
 };
 
 class CPRTMesh

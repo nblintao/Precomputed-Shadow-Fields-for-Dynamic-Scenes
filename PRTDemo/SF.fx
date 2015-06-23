@@ -23,7 +23,7 @@ texture AlbedoTexture;
 // The values for NUM_CLUSTERS, NUM_PCA and NUM_COEFFS are
 // defined by the app upon the D3DXCreateEffectFromFile() call.
 
-float4 aPRTConstants[NUM_CLUSTERS*(1 + NUM_CHANNELS*(NUM_PCA / 4))];
+//float4 aPRTConstants[NUM_CLUSTERS*(1 + NUM_CHANNELS*(NUM_PCA / 4))];
 float4 aPRTClusterBases[((NUM_PCA + 1) * NUM_COEFFS / 4 * NUM_CHANNELS)*NUM_CLUSTERS];
 
 float4 aOOFBuffer[LATNUM*LNGNUM*SPHERENUM * 3 * NUM_COEFFS/4];
@@ -142,22 +142,38 @@ float4 GetPRTDiffuse(int iClusterOffset, float4 vPCAWeights[NUM_PCA / 4], float4
     //sort entities in order of increasing distance
 
     for (int entityid = 0; entityid < BALLNUM; entityid++) {
-        //TODO
-        //If J is a light source
-        
         //query SRF array to get its SRF SJ(p)
-        float SRFoffset = GetFieldOffset(pos, entityid);
+        //query OOF array to get its OOF OJ(p)
+        float FieldOffset = GetFieldOffset(pos, entityid);
 
-        //TODO
-        //rotate SJ(p) to align with global coordinate frame
+        //If J is a light source
+        if (aBallInfo[2 * entityid + 0][1] < 2.0f) {
+        
+            //query SRF array to get its SRF SJ(p)
+            //FieldOffset can be used here
 
-        //Bp += DoubleProduct(SJ(p),Tp)
-        for (int t = 0; t < (NUM_COEFFS / 4); t++) {
-            TheBR += dot(aOOFBuffer[SRFoffset + 0 * NUM_COEFFS / 4 + t], TheTR[t]);
-            TheBG += dot(aOOFBuffer[SRFoffset + 1 * NUM_COEFFS / 4 + t], TheTG[t]);
-            TheBB += dot(aOOFBuffer[SRFoffset + 2 * NUM_COEFFS / 4 + t], TheTB[t]);
+            //TODO
+            //rotate SJ(p) to align with global coordinate frame
+
+            //Bp += DoubleProduct(SJ(p),Tp)
+            for (int t = 0; t < (NUM_COEFFS / 4); t++) {
+                TheBR += dot(aOOFBuffer[FieldOffset + 0 * NUM_COEFFS / 4 + t], TheTR[t]);
+                TheBG += dot(aOOFBuffer[FieldOffset + 1 * NUM_COEFFS / 4 + t], TheTG[t]);
+                TheBB += dot(aOOFBuffer[FieldOffset + 2 * NUM_COEFFS / 4 + t], TheTB[t]);
+            }
         }
+        //Else
+        else {
 
+            //query OOF array to get its OOF OJ(p)
+            //FieldOffset can be used here
+
+            //TODO
+            //rotate OJ(p) to align with global coordinate frame
+
+            //TODO
+            //Tp = TripleProduct(OJ(p), Tp)
+        }
     }
 
     //Bp += DoubleProduct(Sd, Tp)

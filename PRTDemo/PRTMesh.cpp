@@ -12,7 +12,7 @@
 //#define DEBUG_PS   // Uncomment this line to debug pixel shaders 
 
 
-Ball::Ball(FLOAT r, D3DXVECTOR4 pos) :r(r), pos(pos)
+Ball::Ball(FLOAT r, D3DXVECTOR4 pos, BallType type) :r(r), pos(pos), type(type)
 {
 
 }
@@ -20,8 +20,8 @@ Ball::Ball(FLOAT r, D3DXVECTOR4 pos) :r(r), pos(pos)
 
 HRESULT CPRTMesh::SetUpBalls()
 {
-    ballList[0] = new Ball(1, D3DXVECTOR4(2.5f, 2.0f, 1.5f, 0));
-    ballList[1] = new Ball(1, D3DXVECTOR4(2.5f, 7.0f, 1.5f, 0));
+    ballList[0] = new Ball(1, D3DXVECTOR4(2.5f, 2.0f, 1.5f, 0),LIGHT);
+    ballList[1] = new Ball(3, D3DXVECTOR4(2.5f, 7.0f, 1.5f, 0),LIGHT);
     ballNum = 2;
     return S_OK;
 }
@@ -507,9 +507,11 @@ HRESULT CPRTMesh::GetCubeMap(IDirect3DDevice9* pd3dDevice)
 
                     if (SUCCEEDED(pd3dDevice->BeginScene())) {
                         //render here 
+#ifndef USINGTEAPOT
                         meshSphere->DrawSubset(0);
-                        //meshTeapot->DrawSubset(0);
-
+#else
+                        meshTeapot->DrawSubset(0);
+#endif
                         pd3dDevice->EndScene();
                     }
 #ifdef OUTPUTCUBEMAP
@@ -592,9 +594,6 @@ HRESULT CPRTMesh::LoadMesh( IDirect3DDevice9* pd3dDevice, WCHAR* strMeshFileName
         );
 
     SetUpBalls();
-//#ifdef SHADOWFIELDPRE
-//    GetCubeMap(pd3dDevice);
-//#endif
 
     // Release any previous mesh object
     SAFE_RELEASE( m_pMesh );
@@ -1174,11 +1173,11 @@ void CPRTMesh::ExtractCompressedDataForPRTShader()
         V( m_pPRTCompBuffer->ExtractBasis( iCluster, &m_aPRTClusterBases[iCluster * nClusterBasisSize] ) );
     }
 
-//#ifndef SHADOWFIELD
+#ifdef SHADOWFIELD
     SAFE_DELETE_ARRAY( m_aPRTConstants );
     m_aPRTConstants = new float[dwNumClusters * ( 4 + dwNumChannels * dwNumPCA )];
     assert( m_aPRTConstants );
-//#endif
+#endif
 }
 
 
@@ -1306,7 +1305,7 @@ void CPRTMesh::ComputeShaderConstants( float* pSHCoeffsRed, float* pSHCoeffsGree
                                     ( 4 + dwNumChannels * dwNumPCA ) ) );
 }
 
-
+// Constants for SF.fx
 void CPRTMesh::ComputeShaderConstantsWithoutCompress(float* pSHCoeffsRed, float* pSHCoeffsGreen, float* pSHCoeffsBlue, DWORD dwNumCoeffsPerChannel)
 {
     HRESULT hr;
@@ -1331,6 +1330,17 @@ void CPRTMesh::ComputeShaderConstantsWithoutCompress(float* pSHCoeffsRed, float*
     FLOAT *m_aBallInfo = new FLOAT[8*ballNum];
     for (INT i = 0; i < ballNum; i++) {
         m_aBallInfo[i * 8 + 0] = ballList[i]->r;
+        switch (ballList[i]->type) {
+            case LIGHT:
+                m_aBallInfo[i * 8 + 1] = 1.0f;
+                break;
+            case OBJECT:
+                m_aBallInfo[i * 8 + 1] = 3.0f;
+                break;
+            default:
+                break;
+        }
+        
         m_aBallInfo[i * 8 + 4] = ballList[i]->pos.x;
         m_aBallInfo[i * 8 + 5] = ballList[i]->pos.y;
         m_aBallInfo[i * 8 + 6] = ballList[i]->pos.z;
@@ -1354,10 +1364,12 @@ void CPRTMesh::RenderWithPRT(IDirect3DDevice9* pd3dDevice, D3DXMATRIX* pmWorldVi
         if (i == selectBall) {
             SetupLights(pd3dDevice, 'B');
         }
-        else {
+        else if (ballList[i]->type == LIGHT) {
             SetupLights(pd3dDevice, 'Y');
         }
-
+        else if (ballList[i]->type == OBJECT) {
+            SetupLights(pd3dDevice, 'R');
+        }
         D3DXMATRIX m1,m2;
         Ball* ball = ballList[i];
         FLOAT radius = ball->r;
@@ -1366,7 +1378,11 @@ void CPRTMesh::RenderWithPRT(IDirect3DDevice9* pd3dDevice, D3DXMATRIX* pmWorldVi
         D3DXMatrixMultiply(&m1, &m1, &m2);
         D3DXMatrixMultiply(&m1, &m1, pmWorldViewProj);
         pd3dDevice->SetTransform(D3DTS_WORLD, &m1);
+#ifndef USINGTEAPOT
         meshSphere->DrawSubset(0);
+#else
+        meshTeapot->DrawSubset(0);
+#endif
     }
 
     pd3dDevice->SetTransform(D3DTS_WORLD, &tempWorld);

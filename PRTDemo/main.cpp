@@ -1203,9 +1203,9 @@ void UpdateLightingEnvironment()
     D3DXSHAdd( fSum[0], dwOrder, fSum[0], fLightProbe2Rot[0] );
     D3DXSHAdd( fSum[1], dwOrder, fSum[1], fLightProbe2Rot[1] );
     D3DXSHAdd( fSum[2], dwOrder, fSum[2], fLightProbe2Rot[2] );
-//#ifndef SHADOWFIELD
+#ifndef SHADOWFIELD
     g_PRTMesh.ComputeShaderConstants( fSum[0], fSum[1], fSum[2], dwOrder * dwOrder );
-#ifdef SHADOWFIELD
+#else
     g_PRTMesh.ComputeShaderConstantsWithoutCompress(fSum[0], fSum[1], fSum[2], dwOrder * dwOrder);
 #endif
     g_PRTMesh.ComputeSHIrradEnvMapConstants( fSum[0], fSum[1], fSum[2] );
@@ -1436,6 +1436,23 @@ void CALLBACK KeyboardProc( UINT nChar, bool bKeyDown, bool bAltDown, void* pUse
                                 ballList[i]->r -= 1;
                             else if (nChar == 'M')
                                 ballList[i]->r += 1;
+                        }
+
+                        break;
+            }
+            case 'E':
+            {
+                        Ball** ballList = g_PRTMesh.ballList;
+                        INT ballNum = g_PRTMesh.ballNum;
+                        INT selectBall = g_PRTMesh.selectBall;
+                        if (ballList)
+                        for (INT i = 0; i < ballNum; i++) {
+                            if (selectBall != -1 && selectBall != i)
+                                continue;
+                            if (ballList[i]->type == LIGHT)
+                                ballList[i]->type = OBJECT;
+                            else if (ballList[i]->type == OBJECT)
+                                ballList[i]->type = LIGHT;
                         }
 
                         break;
