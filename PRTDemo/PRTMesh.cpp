@@ -1312,7 +1312,7 @@ void CPRTMesh::ComputeShaderConstantsWithoutCompress(float* pSHCoeffsRed, float*
     assert(dwNumCoeffsPerChannel == m_pPRTCompBuffer->GetNumCoeffs());
 
     UINT dwNumCoeffs = m_pPRTCompBuffer->GetNumCoeffs();
-    UINT dwOrder = m_dwPRTOrder;
+    //UINT dwOrder = m_dwPRTOrder;
     UINT dwNumChannels = m_pPRTCompBuffer->GetNumChannels();
     UINT dwNumClusters = m_pPRTCompBuffer->GetNumClusters();
     UINT dwNumPCA = m_pPRTCompBuffer->GetNumPCA();

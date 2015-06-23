@@ -135,13 +135,44 @@ float4 GetPRTDiffuse(int iClusterOffset, float4 vPCAWeights[NUM_PCA / 4], float4
         }
     }
 
-    // BRDF is finished. TheT is equal to BRDF.Tp = TripleProduct(Op, ~rho)
+    // BRDF is finished. TheT is equal to BRDF.
+    // Tp = TripleProduct(Op, ~rho)
 
+    //TODO
+    //rotate T p to align with global coordinate frame
+    
+    //compute distance from p to each scene entity
+    float distance[BALLNUM];
+    int ballIndex[BALLNUM];
+    for (int i = 0; i < BALLNUM; i++) {
+        distance[i] = length(pos - aBallInfo[2 * i + 1]);
+        ballIndex[i] = i;
+    }
+
+    //sort entities in order of increasing distance
+    for (int i = 0; i < BALLNUM - 1; i++) {
+        for (int j = 0; j < BALLNUM - 1; j++) {
+            if (distance[j]>distance[j + 1]) {
+                float ft = distance[j];
+                distance[j] = distance[j + 1];
+                distance[j + 1] = ft;
+                int it = ballIndex[j];
+                ballIndex[j] = ballIndex[j + 1];
+                ballIndex[j + 1] = it;              
+            }
+        }
+    }
 
     //TODO
     //sort entities in order of increasing distance
 
-    for (int entityid = 0; entityid < BALLNUM; entityid++) {
+    for (int i = 0; i < BALLNUM; i++) {
+        int entityid = ballIndex[i];
+        //if (entityid == 0)
+        //    return float4(255, 0, 0, 0);
+        //else if (entityid == 1)
+        //    return float4(0, 255, 0, 0);
+
         //query SRF array to get its SRF SJ(p)
         //query OOF array to get its OOF OJ(p)
         float FieldOffset = GetFieldOffset(pos, entityid);
