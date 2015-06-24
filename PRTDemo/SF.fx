@@ -58,11 +58,127 @@ struct VS_OUTPUT
 
 struct SHProduct_OUTPUT
 {
-    float y[NUM_COEFFS];
+    float c[NUM_COEFFS];
 };
 
 // NUM_COEFFS must be 9 here
 //Based on http://research.microsoft.com/en-us/um/people/johnsny/#shtriple
+SHProduct_OUTPUT SH_product_3(float a[NUM_COEFFS], float b[NUM_COEFFS])
+{
+    float c[NUM_COEFFS];
+    float ta, tb, t;
+    // [0,0]: 0,
+    c[0] = 0.282094792935999980f*a[0] * b[0];
+
+    // [1,1]: 0,6,8,
+    ta = 0.282094791773000010f*a[0] + -0.126156626101000010f*a[6] + -0.218509686119999990f*a[8];
+    tb = 0.282094791773000010f*b[0] + -0.126156626101000010f*b[6] + -0.218509686119999990f*b[8];
+    c[1] = ta*b[1] + tb*a[1];
+    t = a[1] * b[1];
+    c[0] += 0.282094791773000010f*t;
+    c[6] = -0.126156626101000010f*t;
+    c[8] = -0.218509686119999990f*t;
+
+    // [1,2]: 5,
+    ta = 0.218509686118000010f*a[5];
+    tb = 0.218509686118000010f*b[5];
+    c[1] += ta*b[2] + tb*a[2];
+    c[2] = ta*b[1] + tb*a[1];
+    t = a[1] * b[2] + a[2] * b[1];
+    c[5] = 0.218509686118000010f*t;
+
+    // [1,3]: 4,
+    ta = 0.218509686114999990f*a[4];
+    tb = 0.218509686114999990f*b[4];
+    c[1] += ta*b[3] + tb*a[3];
+    c[3] = ta*b[1] + tb*a[1];
+    t = a[1] * b[3] + a[3] * b[1];
+    c[4] = 0.218509686114999990f*t;
+
+    // [2,2]: 0,6,
+    ta = 0.282094795249000000f*a[0] + 0.252313259986999990f*a[6];
+    tb = 0.282094795249000000f*b[0] + 0.252313259986999990f*b[6];
+    c[2] += ta*b[2] + tb*a[2];
+    t = a[2] * b[2];
+    c[0] += 0.282094795249000000f*t;
+    c[6] += 0.252313259986999990f*t;
+
+    // [2,3]: 7,
+    ta = 0.218509686118000010f*a[7];
+    tb = 0.218509686118000010f*b[7];
+    c[2] += ta*b[3] + tb*a[3];
+    c[3] += ta*b[2] + tb*a[2];
+    t = a[2] * b[3] + a[3] * b[2];
+    c[7] = 0.218509686118000010f*t;
+
+    // [3,3]: 0,6,8,
+    ta = 0.282094791773000010f*a[0] + -0.126156626101000010f*a[6] + 0.218509686119999990f*a[8];
+    tb = 0.282094791773000010f*b[0] + -0.126156626101000010f*b[6] + 0.218509686119999990f*b[8];
+    c[3] += ta*b[3] + tb*a[3];
+    t = a[3] * b[3];
+    c[0] += 0.282094791773000010f*t;
+    c[6] += -0.126156626101000010f*t;
+    c[8] += 0.218509686119999990f*t;
+
+    // [4,4]: 0,6,
+    ta = 0.282094791770000020f*a[0] + -0.180223751576000010f*a[6];
+    tb = 0.282094791770000020f*b[0] + -0.180223751576000010f*b[6];
+    c[4] += ta*b[4] + tb*a[4];
+    t = a[4] * b[4];
+    c[0] += 0.282094791770000020f*t;
+    c[6] += -0.180223751576000010f*t;
+
+    // [4,5]: 7,
+    ta = 0.156078347226000000f*a[7];
+    tb = 0.156078347226000000f*b[7];
+    c[4] += ta*b[5] + tb*a[5];
+    c[5] += ta*b[4] + tb*a[4];
+    t = a[4] * b[5] + a[5] * b[4];
+    c[7] += 0.156078347226000000f*t;
+
+    // [5,5]: 0,6,8,
+    ta = 0.282094791773999990f*a[0] + 0.090111875786499998f*a[6] + -0.156078347227999990f*a[8];
+    tb = 0.282094791773999990f*b[0] + 0.090111875786499998f*b[6] + -0.156078347227999990f*b[8];
+    c[5] += ta*b[5] + tb*a[5];
+    t = a[5] * b[5];
+    c[0] += 0.282094791773999990f*t;
+    c[6] += 0.090111875786499998f*t;
+    c[8] += -0.156078347227999990f*t;
+
+    // [6,6]: 0,6,
+    ta = 0.282094797560000000f*a[0];
+    tb = 0.282094797560000000f*b[0];
+    c[6] += ta*b[6] + tb*a[6];
+    t = a[6] * b[6];
+    c[0] += 0.282094797560000000f*t;
+    c[6] += 0.180223764527000010f*t;
+
+    // [7,7]: 0,6,8,
+    ta = 0.282094791773999990f*a[0] + 0.090111875786499998f*a[6] + 0.156078347227999990f*a[8];
+    tb = 0.282094791773999990f*b[0] + 0.090111875786499998f*b[6] + 0.156078347227999990f*b[8];
+    c[7] += ta*b[7] + tb*a[7];
+    t = a[7] * b[7];
+    c[0] += 0.282094791773999990f*t;
+    c[6] += 0.090111875786499998f*t;
+    c[8] += 0.156078347227999990f*t;
+
+    // [8,8]: 0,6,
+    ta = 0.282094791770000020f*a[0] + -0.180223751576000010f*a[6];
+    tb = 0.282094791770000020f*b[0] + -0.180223751576000010f*b[6];
+    c[8] += ta*b[8] + tb*a[8];
+    t = a[8] * b[8];
+    c[0] += 0.282094791770000020f*t;
+    c[6] += -0.180223751576000010f*t;
+
+    // entry count=13
+    // multiply count=120
+    // addition count=74
+    SHProduct_OUTPUT Output;
+    for (int i = 0; i < NUM_COEFFS; i++) {
+        Output.c[i] = c[i];
+    }
+    return Output;
+}
 
 
 float GetFieldOffset(float4 pos, int entityid)
@@ -212,16 +328,36 @@ float4 GetPRTDiffuse(int iClusterOffset, float4 vPCAWeights[NUM_PCA / 4], float4
             //TODO
             //Tp = TripleProduct(OJ(p), Tp)
             
-            //NUM_COEFFS must be 16 here
-            //float y[NUM_COEFFS], f[NUM_COEFFS], g[NUM_COEFFS];
-            //for (int it = 0; it < NUM_COEFFS; it++) {
-            //    f[it] = aOOFBuffer[FieldOffset + 0 * NUM_COEFFS / 4 + it/4][it%4];
-            //    g[it] = TheTR[it / 4][it % 4];
-            //}
-            //y = SHProduct_4(f, g);
-            //for (int t = 0; t < NUM_COEFFS; t++) {
-            //    TheTR[t / 4][t % 4] = y[t];
-            //}
+            //NUM_COEFFS must be 9 here
+            float a[NUM_COEFFS], b[NUM_COEFFS], c[NUM_COEFFS];
+            // Red
+            for (int it = 0; it < NUM_COEFFS; it++) {
+                a[it] = aOOFBuffer[FieldOffset + 0 * NUM_COEFFS + it];
+                b[it] = TheTR[it];
+            }
+            c = SH_product_3(a, b);
+            for (int t = 0; t < NUM_COEFFS; t++) {
+                TheTR[t] = c[t];
+            }
+            // Green
+            for (int it = 0; it < NUM_COEFFS; it++) {
+                a[it] = aOOFBuffer[FieldOffset + 1 * NUM_COEFFS + it];
+                b[it] = TheTG[it];
+            }
+            c = SH_product_3(a, b);
+            for (int t = 0; t < NUM_COEFFS; t++) {
+                TheTG[t] = c[t];
+            }
+            // Blue
+            for (int it = 0; it < NUM_COEFFS; it++) {
+                a[it] = aOOFBuffer[FieldOffset + 2 * NUM_COEFFS + it];
+                b[it] = TheTB[it];
+            }
+            c = SH_product_3(a, b);
+            for (int t = 0; t < NUM_COEFFS; t++) {
+                TheTB[t] = c[t];
+            }
+
         }
 
         
