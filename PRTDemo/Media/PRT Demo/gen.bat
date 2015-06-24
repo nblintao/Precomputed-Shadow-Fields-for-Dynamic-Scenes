@@ -1,0 +1,2 @@
+python gene.py
+pause
