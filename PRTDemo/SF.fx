@@ -15,7 +15,7 @@ texture AlbedoTexture;
 
 #define NUM_CHANNELS	3
 
-#define BALLNUM 2
+#define BALLNUM 3
 #define SPHERENUM 8
 #define LATNUM 4
 #define LNGNUM 4

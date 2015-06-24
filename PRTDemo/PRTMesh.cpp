@@ -20,8 +20,8 @@ Ball::Ball(FLOAT r, D3DXVECTOR4 pos, BallType type) :r(r), pos(pos), type(type)
 
 HRESULT CPRTMesh::SetUpBalls()
 {
-    ballList[0] = new Ball(1, D3DXVECTOR4(2.5f, 2.0f, 1.5f, 0),LIGHT);
-    ballList[1] = new Ball(3, D3DXVECTOR4(2.5f, 7.0f, 1.5f, 0), LIGHT);
+    ballList[0] = new Ball(1, D3DXVECTOR4(5.5f, 1.0f, 2.5f, 0),OBJECT);
+    ballList[1] = new Ball(5, D3DXVECTOR4(2.5f, 10.0f, 1.5f, 0), LIGHT);
     //ballList[2] = new Ball(3, D3DXVECTOR4(2.5f, 7.0f, 5.5f, 0), LIGHT);
     ballNum = 2;
     return S_OK;

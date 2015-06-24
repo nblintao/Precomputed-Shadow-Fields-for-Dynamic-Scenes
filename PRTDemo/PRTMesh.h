@@ -11,8 +11,8 @@
 //#define USINGTEAPOT
 #define CUBE_EDGELENGTH 16
 #define SPHERENUM 8
-#define LATNUM 6
-#define LNGNUM 6
+#define LATNUM 4
+#define LNGNUM 4
 
 typedef enum{
     LIGHT,
