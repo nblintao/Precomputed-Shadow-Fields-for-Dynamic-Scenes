@@ -7,8 +7,8 @@
 
 #include "DXUTcamera.h"
 #define SHADOWFIELD
-//#define OUTPUTCUBEMAP
-//#define USINGTEAPOT
+#define OUTPUTCUBEMAP
+#define USINGTEAPOT
 #define CUBE_EDGELENGTH 16
 #define SPHERENUM 8
 #define LATNUM 5

@@ -1876,7 +1876,8 @@ void LoadSceneAndOptGenResults( IDirect3DDevice9* pd3dDevice, WCHAR* strInputMes
             wcscpy_s( options.strResultsFile, MAX_PATH, pLastSlash + 1 );
         else
             wcscpy_s( options.strResultsFile, MAX_PATH, strResultsFile );
-        options.dwOrder = 6;
+        //options.dwOrder = 6;
+        options.dwOrder = 4;
         options.dwNumRays = nNumRays;
         options.dwNumBounces = nNumBounces;
         options.bSubsurfaceScattering = bSubSurface;
