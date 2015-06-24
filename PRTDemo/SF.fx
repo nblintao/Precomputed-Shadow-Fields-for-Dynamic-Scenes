@@ -17,8 +17,8 @@ texture AlbedoTexture;
 
 #define BALLNUM 2
 #define SPHERENUM 8
-#define LATNUM 5
-#define LNGNUM 5
+#define LATNUM 4
+#define LNGNUM 4
 
 // The values for NUM_CLUSTERS, NUM_PCA and NUM_COEFFS are
 // defined by the app upon the D3DXCreateEffectFromFile() call.
@@ -26,6 +26,7 @@ texture AlbedoTexture;
 //float4 aPRTConstants[NUM_CLUSTERS*(1 + NUM_CHANNELS*(NUM_PCA / 4))];
 float aPRTClusterBases[((NUM_PCA + 1) * NUM_COEFFS * NUM_CHANNELS)*NUM_CLUSTERS];
 float aOOFBuffer[LATNUM*LNGNUM*SPHERENUM * 3 * NUM_COEFFS];
+float aOOFBuffer2[LATNUM*LNGNUM*SPHERENUM * 3 * NUM_COEFFS];
 float aEnvSHCoeffs[NUM_COEFFS * 3];
 float4 aBallInfo[2*BALLNUM];
 
@@ -332,28 +333,28 @@ float4 GetPRTDiffuse(int iClusterOffset, float4 vPCAWeights[NUM_PCA / 4], float4
             float a[NUM_COEFFS], b[NUM_COEFFS], c[NUM_COEFFS];
             // Red
             for (int it = 0; it < NUM_COEFFS; it++) {
-                a[it] = aOOFBuffer[FieldOffset + 0 * NUM_COEFFS + it];
+                a[it] = aOOFBuffer2[FieldOffset + 0 * NUM_COEFFS + it];
                 b[it] = TheTR[it];
             }
-            c = SH_product_3(a, b);
+            c = SH_product_3(a, b).c;
             for (int t = 0; t < NUM_COEFFS; t++) {
                 TheTR[t] = c[t];
             }
             // Green
             for (int it = 0; it < NUM_COEFFS; it++) {
-                a[it] = aOOFBuffer[FieldOffset + 1 * NUM_COEFFS + it];
+                a[it] = aOOFBuffer2[FieldOffset + 1 * NUM_COEFFS + it];
                 b[it] = TheTG[it];
             }
-            c = SH_product_3(a, b);
+            c = SH_product_3(a, b).c;
             for (int t = 0; t < NUM_COEFFS; t++) {
                 TheTG[t] = c[t];
             }
             // Blue
             for (int it = 0; it < NUM_COEFFS; it++) {
-                a[it] = aOOFBuffer[FieldOffset + 2 * NUM_COEFFS + it];
+                a[it] = aOOFBuffer2[FieldOffset + 2 * NUM_COEFFS + it];
                 b[it] = TheTB[it];
             }
-            c = SH_product_3(a, b);
+            c = SH_product_3(a, b).c;
             for (int t = 0; t < NUM_COEFFS; t++) {
                 TheTB[t] = c[t];
             }

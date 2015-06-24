@@ -7,12 +7,12 @@
 
 #include "DXUTcamera.h"
 #define SHADOWFIELD
-#define OUTPUTCUBEMAP
-#define USINGTEAPOT
+//#define OUTPUTCUBEMAP
+//#define USINGTEAPOT
 #define CUBE_EDGELENGTH 16
 #define SPHERENUM 8
-#define LATNUM 5
-#define LNGNUM 5
+#define LATNUM 6
+#define LNGNUM 6
 
 typedef enum{
     LIGHT,

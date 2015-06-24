@@ -21,7 +21,8 @@ Ball::Ball(FLOAT r, D3DXVECTOR4 pos, BallType type) :r(r), pos(pos), type(type)
 HRESULT CPRTMesh::SetUpBalls()
 {
     ballList[0] = new Ball(1, D3DXVECTOR4(2.5f, 2.0f, 1.5f, 0),LIGHT);
-    ballList[1] = new Ball(3, D3DXVECTOR4(2.5f, 7.0f, 1.5f, 0),LIGHT);
+    ballList[1] = new Ball(3, D3DXVECTOR4(2.5f, 7.0f, 1.5f, 0), LIGHT);
+    //ballList[2] = new Ball(3, D3DXVECTOR4(2.5f, 7.0f, 5.5f, 0), LIGHT);
     ballNum = 2;
     return S_OK;
 }
@@ -216,6 +217,8 @@ VOID SetupLights(IDirect3DDevice9* g_pd3dDevice, char color = 'Y')
             break;
         case 'B':
             mtrl.Diffuse.b = mtrl.Ambient.b = 1.0f;
+            break;
+        case 'K'://Black
             break;
         default:
             break;
@@ -457,95 +460,110 @@ HRESULT CPRTMesh::GetCubeMap(IDirect3DDevice9* pd3dDevice)
     //    V( pd3dDevice->SetDepthStencilSurface( g_pDepthCube ) ); 
     //}  
 
-    SetupLights(pd3dDevice);
+    for (int light = 0; light < 2; light++) {
+        if (light == 0)
+            SetupLights(pd3dDevice, 'Y');
+        else
+            //SetupLights(pd3dDevice, 'R');
+            SetupLights(pd3dDevice, 'K');
 
-    UINT m_dwPRTOrder = GetOrderFromNumCoeffs(m_pPRTBuffer->GetNumCoeffs());
-    //UINT m_dwPRTOrder = 6;
+        UINT m_dwPRTOrder = GetOrderFromNumCoeffs(m_pPRTBuffer->GetNumCoeffs());
+        //UINT m_dwPRTOrder = 6;
 
-    //m_aOOFBuffer = new FLOAT(LATNUM*LNGNUM*SPHERENUM * 3 * m_dwPRTOrder*m_dwPRTOrder);
-    m_aOOFBuffer = new FLOAT[LATNUM*LNGNUM*SPHERENUM * 3 * m_dwPRTOrder*m_dwPRTOrder];
-    UINT chanelOffset = m_dwPRTOrder*m_dwPRTOrder;
-    UINT indexOOFBuffer = 0;
-
-
-    //posX, negX, posY, negY, posZ, negZ
-    //for (UINT roughDir = 0; roughDir < 6; roughDir++) {
-    for (UINT latid = 0; latid < LATNUM; latid++){
-        FLOAT lat = D3DX_PI * (latid + 0.5f) / LATNUM;
-        for (UINT lngid = 0; lngid < LNGNUM; lngid++) {
-            FLOAT lng = D3DX_PI * 2 * lngid / LNGNUM;
-
-            FLOAT nx, ny, nz;
-            nx = cos(lng);
-            nz = sin(lng);
-            ny = cos(lat);
-
-            FLOAT radius = 1.0f;
-            FLOAT distance;
-            //16 concentric spheres uniformly distributed between 0.2r and 8r
-            for (UINT sphereid = 0; sphereid < SPHERENUM; sphereid++) {
-                //for (INT sphereid = SPHERENUM; sphereid >=0; sphereid--) {
-                distance = (0.2f + (8.0f - 0.2f)*sphereid / (SPHERENUM - 1))*radius;
-
-                D3DXMATRIX mSampler;
-                D3DXMatrixTranslation(&mSampler, distance*nx, distance*ny, distance*nz);
-                D3DXMatrixInverse(&mWorld, NULL, &mSampler);
-                pd3dDevice->SetTransform(D3DTS_WORLD, &mWorld);
+        //m_aOOFBuffer = new FLOAT(LATNUM*LNGNUM*SPHERENUM * 3 * m_dwPRTOrder*m_dwPRTOrder);
+        m_aOOFBuffer = new FLOAT[LATNUM*LNGNUM*SPHERENUM * 3 * m_dwPRTOrder*m_dwPRTOrder];
+        UINT chanelOffset = m_dwPRTOrder*m_dwPRTOrder;
+        UINT indexOOFBuffer = 0;
 
 
-                for (int nFace = 0; nFace < 6; ++nFace) //render 6 faces of cubemap 
-                {
-                    LPDIRECT3DSURFACE9 pSurf;
-                    V(m_pCubeMap->GetCubeMapSurface((D3DCUBEMAP_FACES)nFace, 0, &pSurf));
-                    V(pd3dDevice->SetRenderTarget(0, pSurf));
+        //posX, negX, posY, negY, posZ, negZ
+        //for (UINT roughDir = 0; roughDir < 6; roughDir++) {
+        for (UINT latid = 0; latid < LATNUM; latid++) {
+            FLOAT lat = D3DX_PI * (latid + 0.5f) / LATNUM;
+            for (UINT lngid = 0; lngid < LNGNUM; lngid++) {
+                FLOAT lng = D3DX_PI * 2 * lngid / LNGNUM;
 
-                    D3DXMATRIXA16 mView = DXUTGetCubeMapViewMatrix(nFace);
-                    //D3DXMatrixMultiply(&mView, &mSampler, &mView);
-                    V(pd3dDevice->SetTransform(D3DTS_VIEW, &mView));
+                FLOAT nx, ny, nz;
+                nx = cos(lng);
+                nz = sin(lng);
+                ny = cos(lat);
 
-                    V(pd3dDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0));
+                FLOAT radius = 1.0f;
+                FLOAT distance;
+                //16 concentric spheres uniformly distributed between 0.2r and 8r
+                for (UINT sphereid = 0; sphereid < SPHERENUM; sphereid++) {
+                    //for (INT sphereid = SPHERENUM; sphereid >=0; sphereid--) {
+                    distance = (0.2f + (8.0f - 0.2f)*sphereid / (SPHERENUM - 1))*radius;
 
-                    if (SUCCEEDED(pd3dDevice->BeginScene())) {
-                        //render here 
+                    D3DXMATRIX mSampler;
+                    D3DXMatrixTranslation(&mSampler, distance*nx, distance*ny, distance*nz);
+                    D3DXMatrixInverse(&mWorld, NULL, &mSampler);
+                    pd3dDevice->SetTransform(D3DTS_WORLD, &mWorld);
+
+
+                    for (int nFace = 0; nFace < 6; ++nFace) //render 6 faces of cubemap 
+                    {
+                        LPDIRECT3DSURFACE9 pSurf;
+                        V(m_pCubeMap->GetCubeMapSurface((D3DCUBEMAP_FACES)nFace, 0, &pSurf));
+                        V(pd3dDevice->SetRenderTarget(0, pSurf));
+
+                        D3DXMATRIXA16 mView = DXUTGetCubeMapViewMatrix(nFace);
+                        //D3DXMatrixMultiply(&mView, &mSampler, &mView);
+                        V(pd3dDevice->SetTransform(D3DTS_VIEW, &mView));
+
+                        if (light == 0) { 
+                            V(pd3dDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0)); 
+                        }
+                        else {
+                            V(pd3dDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 255, 255, 255), 1.0f, 0));                         
+                        }
+
+                        if (SUCCEEDED(pd3dDevice->BeginScene())) {
+                            //render here 
 #ifndef USINGTEAPOT
-                        meshSphere->DrawSubset(0);
+                            meshSphere->DrawSubset(0);
 #else
-                        meshTeapot->DrawSubset(0);
+                            meshTeapot->DrawSubset(0);
 #endif
-                        pd3dDevice->EndScene();
-                    }
+                            pd3dDevice->EndScene();
+                        }
 #ifdef OUTPUTCUBEMAP
-                    WCHAR addr[100];
-                    wsprintfW(addr, L"D:\\CGDebug\\%02d_%02d_%02d_%d.bmp", latid,lngid, sphereid, nFace);
-                    V(D3DXSaveSurfaceToFile(addr, D3DXIFF_BMP, pSurf, NULL, NULL));
+                        WCHAR addr[100];
+                        wsprintfW(addr, L"D:\\CGDebug\\%d_%02d_%02d_%02d_%d.bmp", light,latid,lngid, sphereid, nFace);
+                        V(D3DXSaveSurfaceToFile(addr, D3DXIFF_BMP, pSurf, NULL, NULL));
 #endif
-                    SAFE_RELEASE(pSurf);
+                        SAFE_RELEASE(pSurf);
+
+                    }
+
+                    // A cubemap is finished here.
+
+                    // Who can tell me why I get only pos-x suface here? (Lin TAO)
+                    //D3DXSaveTextureToFile(L"D:\\haha.bmp", D3DXIFF_BMP, m_pCubeMap, NULL);
+
+
+                    V(D3DXSHProjectCubeMap(m_dwPRTOrder, m_pCubeMap, &m_aOOFBuffer[indexOOFBuffer + 0 * chanelOffset], &m_aOOFBuffer[indexOOFBuffer + 1 * chanelOffset], &m_aOOFBuffer[indexOOFBuffer + 2 * chanelOffset]));
+                    //FLOAT ROut[36], GOut[36], BOut[36];
+                    //V(D3DXSHProjectCubeMap(m_dwPRTOrder, m_pCubeMap, ROut,GOut,BOut));
+                    //memcpy(&(m_aOOFBuffer[indexOOFBuffer + 0 * chanelOffset]), ROut, sizeof(ROut));
+                    //memcpy(&(m_aOOFBuffer[indexOOFBuffer + 0 * chanelOffset]), GOut, sizeof(ROut));
+                    //memcpy(&(m_aOOFBuffer[indexOOFBuffer + 0 * chanelOffset]), BOut, sizeof(ROut));
+
+                    indexOOFBuffer += 3 * chanelOffset;
 
                 }
-
-                // A cubemap is finished here.
-
-                // Who can tell me why I get only pos-x suface here? (Lin TAO)
-                //D3DXSaveTextureToFile(L"D:\\haha.bmp", D3DXIFF_BMP, m_pCubeMap, NULL);
-                
-               
-                V(D3DXSHProjectCubeMap(m_dwPRTOrder, m_pCubeMap, &m_aOOFBuffer[indexOOFBuffer + 0 * chanelOffset], &m_aOOFBuffer[indexOOFBuffer + 1 * chanelOffset], &m_aOOFBuffer[indexOOFBuffer + 2 * chanelOffset]));
-                //FLOAT ROut[36], GOut[36], BOut[36];
-                //V(D3DXSHProjectCubeMap(m_dwPRTOrder, m_pCubeMap, ROut,GOut,BOut));
-                //memcpy(&(m_aOOFBuffer[indexOOFBuffer + 0 * chanelOffset]), ROut, sizeof(ROut));
-                //memcpy(&(m_aOOFBuffer[indexOOFBuffer + 0 * chanelOffset]), GOut, sizeof(ROut));
-                //memcpy(&(m_aOOFBuffer[indexOOFBuffer + 0 * chanelOffset]), BOut, sizeof(ROut));
-
-                indexOOFBuffer += 3 * chanelOffset;               
-
             }
         }
+
+        if (light == 0) {
+            V(m_pPRTEffect->SetFloatArray("aOOFBuffer", (float*)m_aOOFBuffer, LATNUM*LNGNUM*SPHERENUM * 3 * m_dwPRTOrder*m_dwPRTOrder));
+        }
+        else {
+            V(m_pPRTEffect->SetFloatArray("aOOFBuffer2", (float*)m_aOOFBuffer, LATNUM*LNGNUM*SPHERENUM * 3 * m_dwPRTOrder*m_dwPRTOrder));
+        }
+
+        SAFE_DELETE(m_aOOFBuffer);
     }
-    
-
-    V(m_pPRTEffect->SetFloatArray("aOOFBuffer", (float*)m_aOOFBuffer, LATNUM*LNGNUM*SPHERENUM * 3 * m_dwPRTOrder*m_dwPRTOrder));
-
-    SAFE_DELETE(m_aOOFBuffer);
 
     //Restore depth-stencil buffer and render target 
     /*if( pDSOld )// Depth Stencil is used
