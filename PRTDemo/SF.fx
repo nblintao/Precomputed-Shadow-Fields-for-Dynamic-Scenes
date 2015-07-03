@@ -12,20 +12,26 @@
 //-----------------------------------------------------------------------------
 float4x4 g_mWorldViewProjection;
 texture AlbedoTexture;
+texture OOFTex;
+//Texture2D<float> OOFTex: register(t0);
+//SamplerState OOFTexSampler : register(s0);
+
 
 #define NUM_CHANNELS	3
 
 #define BALLNUM 3
 #define SPHERENUM 8
-#define LATNUM 4
-#define LNGNUM 4
+#define LATNUM 5
+#define LNGNUM 5
+#define DIST_NEAR 0.2f
+#define DIST_FAR 8.0f
 
 // The values for NUM_CLUSTERS, NUM_PCA and NUM_COEFFS are
 // defined by the app upon the D3DXCreateEffectFromFile() call.
 
 //float4 aPRTConstants[NUM_CLUSTERS*(1 + NUM_CHANNELS*(NUM_PCA / 4))];
 float aPRTClusterBases[((NUM_PCA + 1) * NUM_COEFFS * NUM_CHANNELS)*NUM_CLUSTERS];
-float aOOFBuffer[LATNUM*LNGNUM*SPHERENUM * 3 * NUM_COEFFS];
+//float aOOFBuffer[LATNUM*LNGNUM*SPHERENUM * 3 * NUM_COEFFS];
 float aOOFBuffer2[LATNUM*LNGNUM*SPHERENUM * 3 * NUM_COEFFS];
 float aEnvSHCoeffs[NUM_COEFFS * 3];
 float4 aBallInfo[2*BALLNUM];
@@ -46,6 +52,13 @@ sampler AlbedoSampler = sampler_state
     MagFilter = LINEAR;
 };
 
+sampler OOFTexSampler = sampler_state
+{
+    Texture = (OOFTex);
+    MipFilter = LINEAR;
+    MinFilter = LINEAR;
+    MagFilter = LINEAR;
+};
 
 //-----------------------------------------------------------------------------
 // Vertex shader output structure
@@ -187,7 +200,7 @@ float GetFieldOffset(float4 pos, int entityid)
     float4 relativePos = pos - aBallInfo[2 * entityid + 1];
     float ballRadius = aBallInfo[2 * entityid + 0][0];
 
-    int sphereid = (length(relativePos) / ballRadius - 0.2) / ((8.0f - 0.2f) / (SPHERENUM - 1));
+    int sphereid = (length(relativePos) / ballRadius - DIST_NEAR) / ((DIST_FAR - DIST_NEAR) / (SPHERENUM - 1));
     sphereid = clamp(sphereid, 0, SPHERENUM - 1);
     //if (sphereid < 0)
     //    sphereid = 0;
@@ -312,9 +325,19 @@ float4 GetPRTDiffuse(int iClusterOffset, float4 vPCAWeights[NUM_PCA / 4], float4
 
             //Bp += DoubleProduct(SJ(p),Tp)
             for (int t = 0; t < NUM_COEFFS; t++) {
-                TheBR += aOOFBuffer[FieldOffset + 0 * NUM_COEFFS + t] * TheTR[t];
-                TheBG += aOOFBuffer[FieldOffset + 1 * NUM_COEFFS + t] * TheTG[t];
-                TheBB += aOOFBuffer[FieldOffset + 2 * NUM_COEFFS + t] * TheTB[t];
+                //TheBR += aOOFBuffer[FieldOffset + 0 * NUM_COEFFS + t] * TheTR[t];
+                //TheBG += aOOFBuffer[FieldOffset + 1 * NUM_COEFFS + t] * TheTG[t];
+                //TheBB += aOOFBuffer[FieldOffset + 2 * NUM_COEFFS + t] * TheTB[t];
+                int ppp = FieldOffset + 0 * NUM_COEFFS + t;
+                float4 hello = tex2Dlod(OOFTexSampler, float4(0.5f, 0.5f + floor(ppp / 4), 0, 0));
+                    //float hello = OOFTex.Sample(OOFTexSampler, float2(0.5f, FieldOffset + 0 * NUM_COEFFS + t + 0.5f));
+                    TheBR += hello[ppp % 4] * TheTR[t];
+                ppp = FieldOffset + 1 * NUM_COEFFS + t;
+                hello = tex2Dlod(OOFTexSampler, float4(0.5f, 0.5f + floor(ppp / 4), 0, 0));
+                             TheBG += hello[ppp % 4] * TheTG[t];
+                 ppp = FieldOffset + 2 * NUM_COEFFS + t;
+                hello = tex2Dlod(OOFTexSampler, float4(0.5f, 0.5f + floor(ppp / 4), 0, 0));           
+                             TheBB += hello[ppp % 4] * TheTB[t];
             }
         }
         //Else

@@ -490,10 +490,10 @@ HRESULT CPRTMesh::GetCubeMap(IDirect3DDevice9* pd3dDevice)
 
                 FLOAT radius = 1.0f;
                 FLOAT distance;
-                //16 concentric spheres uniformly distributed between 0.2r and 8r
+                //16 concentric spheres uniformly distributed between 0.2(DIST_NEAR)r and 8(DIST_FAR)r
                 for (UINT sphereid = 0; sphereid < SPHERENUM; sphereid++) {
                     //for (INT sphereid = SPHERENUM; sphereid >=0; sphereid--) {
-                    distance = (0.2f + (8.0f - 0.2f)*sphereid / (SPHERENUM - 1))*radius;
+                    distance = (DIST_NEAR + (DIST_FAR - DIST_NEAR)*sphereid / (SPHERENUM - 1))*radius;
 
                     D3DXMATRIX mSampler;
                     D3DXMatrixTranslation(&mSampler, distance*nx, distance*ny, distance*nz);
@@ -556,7 +556,59 @@ HRESULT CPRTMesh::GetCubeMap(IDirect3DDevice9* pd3dDevice)
         }
 
         if (light == 0) {
+#ifndef USINGTEXTUREBUFFER
             V(m_pPRTEffect->SetFloatArray("aOOFBuffer", (float*)m_aOOFBuffer, LATNUM*LNGNUM*SPHERENUM * 3 * m_dwPRTOrder*m_dwPRTOrder));
+#endif
+
+            // store the data in the texture instead of constant buffer
+            //UINT width = sizeof(m_aOOFBuffer) / sizeof(float) / 4;
+            UINT width = LATNUM*LNGNUM*SPHERENUM * 3 * m_dwPRTOrder*m_dwPRTOrder / 4;
+            UINT height = 1;
+            //pd3dDevice->CreateTexture(width, height, 1, 0, D3DFMT_A16B16G16R16F, D3DPOOL_MANAGED, &OOFTex, NULL);D3DFMT_A8R8G8B8
+            V(pd3dDevice->CreateTexture(width, height, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &OOFTex, NULL));
+            
+            D3DLOCKED_RECT rect_temp;
+            //OOFTex->LockRect(0, &rect_temp, NULL, D3DLOCK_DISCARD);
+            V(OOFTex->LockRect(0, &rect_temp, NULL, 0));
+            //memset(lockrect.pBits, 0x00, lockrect.Pitch*height);
+            memcpy(rect_temp.pBits, m_aOOFBuffer, rect_temp.Pitch*height);
+            OOFTex->UnlockRect(0);
+
+            //BYTE *bitPointer = (BYTE *)rect_temp.pBits;
+
+            //for (int t = 0; t < SVB.height; t++) {
+            //    for (int k = 0; k < 200; k++) {
+            //        bitPointer[rect_temp.Pitch * t + 4 * k + 1] = 128;
+            //        bitPointer[rect_temp.Pitch * t + 4 * k + 2] = 128;
+            //        bitPointer[rect_temp.Pitch * t + 4 * k + 3] = 128;
+            //        bitPointer[rect_temp.Pitch * t + 4 * k] = 0;
+            //    }
+            //}
+
+            //V(pd3dDevice->CreateVertexBuffer(sizeof(m_aOOFBuffer), D3DUSAGE_WRITEONLY, 0, D3DPOOL_DEFAULT, &OOFVB, NULL));
+            //float *temp = 0;
+            //V(OOFVB->Lock(0, 0, (void**)&temp,0));
+            //memcpy(temp, m_aOOFBuffer, sizeof(m_aOOFBuffer));
+            //V(OOFVB->Unlock());
+
+            //OOFTexHandle = m_pPRTEffect->GetParameterByName(0, "OOFTex");
+            //m_pPRTEffect->SetTexture(OOFTexHandle, OOFTex);
+
+            V(m_pPRTEffect->SetTexture("OOFTex", OOFTex));
+
+            
+
+            //pd3dDevice->SetTexture(0, OOFTex);
+            //pd3dDevice->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
+            //pd3dDevice->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
+            //pd3dDevice->SetSamplerState(0, D3DSAMP_MIPFILTER, D3DTEXF_LINEAR);
+
+
+            //pd3dDevice->SetTexture(OOFTexDesc.RegisterIndex, OOFTex);
+            //pd3dDevice->SetSamplerState(OOFTexDesc.RegisterIndex, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
+            //pd3dDevice->SetSamplerState(OOFTexDesc.RegisterIndex, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
+            //pd3dDevice->SetSamplerState(OOFTexDesc.RegisterIndex, D3DSAMP_MIPFILTER, D3DTEXF_LINEAR);
+
         }
         else {
             V(m_pPRTEffect->SetFloatArray("aOOFBuffer2", (float*)m_aOOFBuffer, LATNUM*LNGNUM*SPHERENUM * 3 * m_dwPRTOrder*m_dwPRTOrder));
@@ -2082,6 +2134,10 @@ void CPRTMesh::OnDestroyDevice()
 
     SAFE_DELETE_ARRAY( m_aPRTClusterBases );
     SAFE_DELETE_ARRAY( m_aPRTConstants );
+
+    SAFE_RELEASE(OOFVB);
+    SAFE_RELEASE(OOFTex);
+    //SAFE_RELEASE(OOFTexHandle);
 }
 
 

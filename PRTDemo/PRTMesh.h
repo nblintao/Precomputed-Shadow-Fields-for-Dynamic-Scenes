@@ -8,11 +8,14 @@
 #include "DXUTcamera.h"
 #define SHADOWFIELD
 //#define OUTPUTCUBEMAP
-//#define USINGTEAPOT
+#define USINGTEAPOT
+#define USINGTEXTUREBUFFER
 #define CUBE_EDGELENGTH 16
 #define SPHERENUM 8
-#define LATNUM 4
-#define LNGNUM 4
+#define LATNUM 8
+#define LNGNUM 8
+#define DIST_NEAR 0.2f
+#define DIST_FAR 8.0f
 
 typedef enum{
     LIGHT,
@@ -225,4 +228,9 @@ public:
     Ball* ballList[10];
     INT ballNum = 0;
     INT selectBall = -1;
+
+    IDirect3DVertexBuffer9* OOFVB = 0;
+    IDirect3DTexture9* OOFTex = 0;
+    D3DXHANDLE OOFTexHandle = 0;
+    //D3DXCONSTANT_DESC OOFDesc;
 };
