@@ -560,7 +560,7 @@ HRESULT CPRTMesh::GetCubeMap(IDirect3DDevice9* pd3dDevice)
             V(m_pPRTEffect->SetFloatArray("aOOFBuffer", (float*)m_aOOFBuffer, LATNUM*LNGNUM*SPHERENUM * 3 * m_dwPRTOrder*m_dwPRTOrder));
 #endif
 
-            float value = 0.314;
+/*            float value = 0.314;
             
             UINT a, r, g, b;
             value *= 256;
@@ -591,14 +591,20 @@ HRESULT CPRTMesh::GetCubeMap(IDirect3DDevice9* pd3dDevice)
             V(OOFTex->LockRect(0, &rect_temp, NULL, 0));
             memcpy(rect_temp.pBits, p, rect_temp.Pitch*height);
             OOFTex->UnlockRect(0);
+      */      
             
-            
-            /*
+#define TEXWIDTH 128;
             UINT a, r, g, b;
             UINT OOFCount = LATNUM*LNGNUM*SPHERENUM * 3 * m_dwPRTOrder*m_dwPRTOrder;
-            c_aOOFBuffer = new D3DCOLOR[OOFCount];
+            UINT width = TEXWIDTH;
+            UINT height = ceil(1.0f*OOFCount/width);
+            c_aOOFBuffer = new D3DCOLOR[width*height];
+
+            //memset(c_aOOFBuffer, 0, width*height*sizeof(D3DCOLOR));
             for (UINT i = 0; i < OOFCount; i++) {
                 float value = m_aOOFBuffer[i];
+                value = (value + 2) / 4;
+                //m_aOOFBuffer[i] = value;
                 value *= 256;
                 b = (int)value;
                 value -= b;
@@ -613,11 +619,19 @@ HRESULT CPRTMesh::GetCubeMap(IDirect3DDevice9* pd3dDevice)
                 c_aOOFBuffer[i] = D3DCOLOR_ARGB(a, r, g, b);
             }          
 
+
+            //float minn = 9999999, maxx = -9999999;
+            //for (UINT i = 0; i < OOFCount; i++) {
+            //    if (m_aOOFBuffer[i] < minn)
+            //        minn = m_aOOFBuffer[i];
+            //    if (m_aOOFBuffer[i]>maxx)
+            //        maxx = m_aOOFBuffer[i];
+            //}
+
             // store the data in the texture instead of constant buffer
             //UINT width = sizeof(m_aOOFBuffer) / sizeof(float) / 4;
             //UINT width = LATNUM*LNGNUM*SPHERENUM * 3 * m_dwPRTOrder*m_dwPRTOrder;
-            UINT width = OOFCount;
-            UINT height = 1;
+
             //pd3dDevice->CreateTexture(width, height, 1, 0, D3DFMT_A16B16G16R16F, D3DPOOL_MANAGED, &OOFTex, NULL);D3DFMT_A8R8G8B8
             //V(pd3dDevice->CreateTexture(width, height, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &OOFTex, NULL));
             V(pd3dDevice->CreateTexture(width, height, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &OOFTex, NULL));
@@ -648,11 +662,10 @@ HRESULT CPRTMesh::GetCubeMap(IDirect3DDevice9* pd3dDevice)
 
             //OOFTexHandle = m_pPRTEffect->GetParameterByName(0, "OOFTex");
             //m_pPRTEffect->SetTexture(OOFTexHandle, OOFTex);
-*/ 
+
             V(m_pPRTEffect->SetTexture("OOFTex", OOFTex));
 
             SAFE_DELETE_ARRAY(c_aOOFBuffer);
-
            
 
             //pd3dDevice->SetTexture(0, OOFTex);

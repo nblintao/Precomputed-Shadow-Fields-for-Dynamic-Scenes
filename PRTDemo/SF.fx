@@ -42,6 +42,7 @@ float4 MaterialDiffuseColor = { 1.0f, 1.0f, 1.0f, 1.0f };
 #define TheTR BRDFR
 #define TheTG BRDFG
 #define TheTB BRDFB
+#define TEXWIDTH 128
 
 //-----------------------------------------------------------------------------
 sampler AlbedoSampler = sampler_state
@@ -79,19 +80,23 @@ float4 bitShifts = float4(1.0 / (256.0*256.0*256.0), 1.0 / (256.0*256.0), 1.0 / 
 
 float getFloat(int ppp)
 {
-    int n = 2;
-    //int n = LATNUM*LNGNUM*SPHERENUM * 3 * NUM_COEFFS;
-    float texOff = 1.0f / n*(0.5f + ppp);
+    int nx = TEXWIDTH;
+    int ny = LATNUM*LNGNUM*SPHERENUM * 3 * NUM_COEFFS/nx;
+    int x = ppp%TEXWIDTH;
+    int y = ppp / TEXWIDTH;
+    float texOffX = 1.0f / nx*(0.5f + x);
+    float texOffY = 1.0f / ny*(0.5f + y);
     float4 hello;
     float hi;
 
     //float hello = OOFTex.Sample(OOFTexSampler, float2(0.5f, FieldOffset + 0 * NUM_COEFFS + t + 0.5f));
 
     //return tex2Dlod(OOFTexSampler, float4(pos.x / 2, pos.y / 2, 0, 0));
-    hello = tex2Dlod(OOFTexSampler, float4(texOff, 0, 0, 0));
+    hello = tex2Dlod(OOFTexSampler, float4(texOffX, texOffY, 0, 0));
     //return hello;
     hi = dot(hello.argb, bitShifts);
-    return hi;
+    //return hi;
+    return hi * 4 - 2;
 }
 
 // NUM_COEFFS must be 9 here
@@ -257,7 +262,7 @@ float GetFieldOffset(float4 pos, int entityid)
 //-----------------------------------------------------------------------------
 float4 GetPRTDiffuse(int iClusterOffset, float4 vPCAWeights[NUM_PCA / 4], float4 pos)
 {
-    return tex2Dlod(OOFTexSampler, float4(0.75, 0.25, 0, 0));
+    //return tex2Dlod(OOFTexSampler, float4(0.75, 0.25, 0, 0));
     //return float4(getFloat(0),0,0,0);
 
     // With compressed PRT, a single diffuse channel is caluated by:
