@@ -13,6 +13,7 @@
 float4x4 g_mWorldViewProjection;
 texture AlbedoTexture;
 texture OOFTex;
+texture OOFTex2;
 //Texture2D<float> OOFTex: register(t0);
 //SamplerState OOFTexSampler : register(s0);
 
@@ -20,11 +21,12 @@ texture OOFTex;
 #define NUM_CHANNELS	3
 
 #define BALLNUM 3
-#define SPHERENUM 8
-#define LATNUM 4
-#define LNGNUM 4
+#define SPHERENUM 16
+#define LATNUM 10
+#define LNGNUM 10
 #define DIST_NEAR 0.2f
 #define DIST_FAR 8.0f
+#define TEXWIDTH 128
 
 // The values for NUM_CLUSTERS, NUM_PCA and NUM_COEFFS are
 // defined by the app upon the D3DXCreateEffectFromFile() call.
@@ -32,7 +34,7 @@ texture OOFTex;
 //float4 aPRTConstants[NUM_CLUSTERS*(1 + NUM_CHANNELS*(NUM_PCA / 4))];
 float aPRTClusterBases[((NUM_PCA + 1) * NUM_COEFFS * NUM_CHANNELS)*NUM_CLUSTERS];
 //float aOOFBuffer[LATNUM*LNGNUM*SPHERENUM * 3 * NUM_COEFFS];
-float aOOFBuffer2[LATNUM*LNGNUM*SPHERENUM * 3 * NUM_COEFFS];
+//float aOOFBuffer2[LATNUM*LNGNUM*SPHERENUM * 3 * NUM_COEFFS];
 float aEnvSHCoeffs[NUM_COEFFS * 3];
 float4 aBallInfo[2*BALLNUM];
 
@@ -61,6 +63,14 @@ sampler OOFTexSampler = sampler_state
     MagFilter = LINEAR;
 };
 
+sampler OOFTexSampler2 = sampler_state
+{
+    Texture = (OOFTex2);
+    MipFilter = LINEAR;
+    MinFilter = LINEAR;
+    MagFilter = LINEAR;
+};
+
 //-----------------------------------------------------------------------------
 // Vertex shader output structure
 //-----------------------------------------------------------------------------
@@ -78,14 +88,12 @@ struct SHProduct_OUTPUT
 
 float4 bitShifts = float4(1.0 / (256.0*256.0*256.0), 1.0 / (256.0*256.0), 1.0 / 256.0, 1);
 
-#define TEXWIDTH 128
-//#define TEXWIDTH 3
-
-float getFloat(int ppp)
+float getOOFBuffer(int ppp)
 {
     int nx = TEXWIDTH;
-    //int n = LATNUM*LNGNUM*SPHERENUM * 3 * NUM_COEFFS;
-    int n = 8;
+    int n = LATNUM*LNGNUM*SPHERENUM * 3 * NUM_COEFFS;
+    //int n = 8;
+    //int n = 3456;
     int ny = ceil(1.0f*n/nx);
     int x = ppp%TEXWIDTH;
     int y = ppp / TEXWIDTH;
@@ -101,7 +109,24 @@ float getFloat(int ppp)
     //return hello;
     hi = dot(hello.argb, bitShifts);
     //return hi;
-    return hi * 4.0f - 2.0f;
+    return hi * 10.0f - 5.0f;
+}
+
+float getOOFBuffer2(int ppp)
+{
+    int nx = TEXWIDTH;
+    int n = LATNUM*LNGNUM*SPHERENUM * 3 * NUM_COEFFS;
+    int ny = ceil(1.0f*n / nx);
+    int x = ppp%TEXWIDTH;
+    int y = ppp / TEXWIDTH;
+    float texOffX = 1.0f / nx*(0.5f + x);
+    float texOffY = 1.0f / ny*(0.5f + y);
+    float4 hello;
+    float hi;
+    // The only difference with the code before:
+    hello = tex2Dlod(OOFTexSampler2, float4(texOffX, texOffY, 0, 0));
+    hi = dot(hello.argb, bitShifts);
+    return hi * 10.0f - 5.0f;
 }
 
 // NUM_COEFFS must be 9 here
@@ -267,7 +292,7 @@ float GetFieldOffset(float4 pos, int entityid)
 //-----------------------------------------------------------------------------
 float4 GetPRTDiffuse(int iClusterOffset, float4 vPCAWeights[NUM_PCA / 4], float4 pos)
 {
-    return float4(getFloat(0),getFloat(1),getFloat(3),0);
+    //return float4(getFloat(0),getFloat(1),getFloat(3),0);
     //return tex2Dlod(OOFTexSampler, float4(0.75, 0.25, 0, 0));
     //return float4(getFloat(0),0,0,0);
 
@@ -361,31 +386,10 @@ float4 GetPRTDiffuse(int iClusterOffset, float4 vPCAWeights[NUM_PCA / 4], float4
                 //TheBR += aOOFBuffer[FieldOffset + 0 * NUM_COEFFS + t] * TheTR[t];
                 //TheBG += aOOFBuffer[FieldOffset + 1 * NUM_COEFFS + t] * TheTG[t];
                 //TheBB += aOOFBuffer[FieldOffset + 2 * NUM_COEFFS + t] * TheTB[t];
-                //int ppp;
-                //float4 hello;
-                float hi;
 
-                //float hello = OOFTex.Sample(OOFTexSampler, float2(0.5f, FieldOffset + 0 * NUM_COEFFS + t + 0.5f));
-
-                const float4 bitShifts = float4(1.0 / (256.0*256.0*256.0), 1.0 / (256.0*256.0), 1.0 / 256.0, 1);
-                
-                //ppp = FieldOffset + 0 * NUM_COEFFS + t;
-                //hello = tex2Dlod(OOFTexSampler, float4(0.5f, 0.5f + ppp, 0, 0));
-                //hi = dot(hello.xyzw, bitShifts);
-                hi = getFloat(FieldOffset + 0 * NUM_COEFFS + t);
-                TheBR += hi * TheTR[t];
-                                
-                //ppp = FieldOffset + 1 * NUM_COEFFS + t;
-                //hello = tex2Dlod(OOFTexSampler, float4(0.5f, 0.5f + ppp, 0, 0));
-                //hi = dot(hello.xyzw, bitShifts);;
-                hi = getFloat(FieldOffset + 1 * NUM_COEFFS + t);
-                TheBG += hi * TheTG[t];
-                
-                //ppp = FieldOffset + 2 * NUM_COEFFS + t;
-                //hello = tex2Dlod(OOFTexSampler, float4(0.5f, 0.5f + ppp, 0, 0));
-                //hi = dot(hello.xyzw, bitShifts);;
-                hi = getFloat(FieldOffset + 2 * NUM_COEFFS + t);
-                TheBB += hi * TheTB[t];
+                TheBR += getOOFBuffer(FieldOffset + 0 * NUM_COEFFS + t) * TheTR[t];
+                TheBG += getOOFBuffer(FieldOffset + 1 * NUM_COEFFS + t) * TheTG[t];
+                TheBB += getOOFBuffer(FieldOffset + 2 * NUM_COEFFS + t) * TheTB[t];
             }
         }
         //Else
@@ -404,7 +408,7 @@ float4 GetPRTDiffuse(int iClusterOffset, float4 vPCAWeights[NUM_PCA / 4], float4
             float a[NUM_COEFFS], b[NUM_COEFFS], c[NUM_COEFFS];
             // Red
             for (int it = 0; it < NUM_COEFFS; it++) {
-                a[it] = aOOFBuffer2[FieldOffset + 0 * NUM_COEFFS + it];
+                a[it] = getOOFBuffer2(FieldOffset + 0 * NUM_COEFFS + it);
                 b[it] = TheTR[it];
             }
             c = SH_product_3(a, b).c;
@@ -413,7 +417,7 @@ float4 GetPRTDiffuse(int iClusterOffset, float4 vPCAWeights[NUM_PCA / 4], float4
             }
             // Green
             for (int it = 0; it < NUM_COEFFS; it++) {
-                a[it] = aOOFBuffer2[FieldOffset + 1 * NUM_COEFFS + it];
+                a[it] = getOOFBuffer2(FieldOffset + 1 * NUM_COEFFS + it);
                 b[it] = TheTG[it];
             }
             c = SH_product_3(a, b).c;
@@ -422,7 +426,7 @@ float4 GetPRTDiffuse(int iClusterOffset, float4 vPCAWeights[NUM_PCA / 4], float4
             }
             // Blue
             for (int it = 0; it < NUM_COEFFS; it++) {
-                a[it] = aOOFBuffer2[FieldOffset + 2 * NUM_COEFFS + it];
+                a[it] = getOOFBuffer2(FieldOffset + 2 * NUM_COEFFS + it);
                 b[it] = TheTB[it];
             }
             c = SH_product_3(a, b).c;

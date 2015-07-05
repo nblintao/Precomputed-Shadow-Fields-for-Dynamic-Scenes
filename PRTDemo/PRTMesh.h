@@ -11,11 +11,13 @@
 #define USINGTEAPOT
 #define USINGTEXTUREBUFFER
 #define CUBE_EDGELENGTH 16
-#define SPHERENUM 8
-#define LATNUM 4
-#define LNGNUM 4
+#define SPHERENUM 16
+#define LATNUM 10
+#define LNGNUM 10
 #define DIST_NEAR 0.2f
 #define DIST_FAR 8.0f
+#define TEXWIDTH 128
+
 
 typedef enum{
     LIGHT,

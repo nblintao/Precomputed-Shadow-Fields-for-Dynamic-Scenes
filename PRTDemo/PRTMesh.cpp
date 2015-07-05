@@ -577,7 +577,7 @@ HRESULT CPRTMesh::GetCubeMap(IDirect3DDevice9* pd3dDevice)
         if (light == 0) {
 #ifndef USINGTEXTUREBUFFER
             V(m_pPRTEffect->SetFloatArray("aOOFBuffer", (float*)m_aOOFBuffer, LATNUM*LNGNUM*SPHERENUM * 3 * m_dwPRTOrder*m_dwPRTOrder));
-#endif
+#else
 
             //D3DCOLOR p[6] = { 
             //    packetFloatToColor(0.314),
@@ -596,24 +596,26 @@ HRESULT CPRTMesh::GetCubeMap(IDirect3DDevice9* pd3dDevice)
             //OOFTex->UnlockRect(0);
       
             //*HAHA
-#define TEXWIDTH 128
-//#define TEXWIDTH 3
-            //UINT OOFCount = LATNUM*LNGNUM*SPHERENUM * 3 * m_dwPRTOrder*m_dwPRTOrder;
-            UINT OOFCount = 8;
+            UINT OOFCount = LATNUM*LNGNUM*SPHERENUM * 3 * m_dwPRTOrder*m_dwPRTOrder;
+            //UINT OOFCount = 3456;
             UINT width = TEXWIDTH;
             UINT height = ceil(1.0f*OOFCount/width);
-            float testm_aOOFBuffer[8] = { 0.314, 0.6, 0.8, 0.1, 0.9, 0.44};
+            //float testm_aOOFBuffer[3456] = { 0.314, 0.6, 0.8, 0.1, 0.9, 0.44 };
             c_aOOFBuffer = new D3DCOLOR[width*height];
             
             for (UINT i = 0; i < OOFCount; i++) {
-                float value = testm_aOOFBuffer[i];
-                //float value = m_aOOFBuffer[i];
-                value = (value + 2.0f) / 4.0f;
+                //float value = testm_aOOFBuffer[i];
+                float value = m_aOOFBuffer[i];
+                // Value should belongs to [0,1]
+                // TODO generate the transfer function according to min & max value
+                value = (value + 5.0f) / 10.0f;
                 //m_aOOFBuffer[i] = value;
                 c_aOOFBuffer[i] = packetFloatToColor(value);
             }          
 
 
+            //minn - 0.873734117	float
+            //maxx	0.868601143	float
             //float minn = 9999999, maxx = -9999999;
             //for (UINT i = 0; i < OOFCount; i++) {
             //    if (m_aOOFBuffer[i] < minn)
@@ -639,16 +641,6 @@ HRESULT CPRTMesh::GetCubeMap(IDirect3DDevice9* pd3dDevice)
             memcpy(rect_temp.pBits, c_aOOFBuffer, rect_temp.Pitch*height);
             OOFTex->UnlockRect(0);
             
-            //BYTE *bitPointer = (BYTE *)rect_temp.pBits;
-
-            //for (int t = 0; t < SVB.height; t++) {
-            //    for (int k = 0; k < 200; k++) {
-            //        bitPointer[rect_temp.Pitch * t + 4 * k + 1] = 128;
-            //        bitPointer[rect_temp.Pitch * t + 4 * k + 2] = 128;
-            //        bitPointer[rect_temp.Pitch * t + 4 * k + 3] = 128;
-            //        bitPointer[rect_temp.Pitch * t + 4 * k] = 0;
-            //    }
-            //}
 
             //V(pd3dDevice->CreateVertexBuffer(sizeof(m_aOOFBuffer), D3DUSAGE_WRITEONLY, 0, D3DPOOL_DEFAULT, &OOFVB, NULL));
             //float *temp = 0;
@@ -658,10 +650,12 @@ HRESULT CPRTMesh::GetCubeMap(IDirect3DDevice9* pd3dDevice)
 
             //OOFTexHandle = m_pPRTEffect->GetParameterByName(0, "OOFTex");
             //m_pPRTEffect->SetTexture(OOFTexHandle, OOFTex);
-//HAHA*/
+
             V(m_pPRTEffect->SetTexture("OOFTex", OOFTex));
 
             SAFE_DELETE_ARRAY(c_aOOFBuffer);
+            SAFE_RELEASE(OOFTex);
+
            
 
             //pd3dDevice->SetTexture(0, OOFTex);
@@ -674,10 +668,42 @@ HRESULT CPRTMesh::GetCubeMap(IDirect3DDevice9* pd3dDevice)
             //pd3dDevice->SetSamplerState(OOFTexDesc.RegisterIndex, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
             //pd3dDevice->SetSamplerState(OOFTexDesc.RegisterIndex, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
             //pd3dDevice->SetSamplerState(OOFTexDesc.RegisterIndex, D3DSAMP_MIPFILTER, D3DTEXF_LINEAR);
-
+#endif
         }
         else {
+#ifndef USINGTEXTUREBUFFER
             V(m_pPRTEffect->SetFloatArray("aOOFBuffer2", (float*)m_aOOFBuffer, LATNUM*LNGNUM*SPHERENUM * 3 * m_dwPRTOrder*m_dwPRTOrder));
+#else
+            UINT OOFCount = LATNUM*LNGNUM*SPHERENUM * 3 * m_dwPRTOrder*m_dwPRTOrder;
+            UINT width = TEXWIDTH;
+            UINT height = ceil(1.0f*OOFCount / width);
+            c_aOOFBuffer = new D3DCOLOR[width*height];
+            // 		minn	-0.868601143	float
+            //		maxx	3.54320693	float
+            //float minn = 9999999, maxx = -9999999;
+            //for (UINT i = 0; i < OOFCount; i++) {
+            //    if (m_aOOFBuffer[i] < minn)
+            //        minn = m_aOOFBuffer[i];
+            //    if (m_aOOFBuffer[i]>maxx)
+            //        maxx = m_aOOFBuffer[i];
+            //}
+
+            for (UINT i = 0; i < OOFCount; i++) {
+                float value = m_aOOFBuffer[i];
+                value = (value + 5.0f) / 10.0f;
+                c_aOOFBuffer[i] = packetFloatToColor(value);
+            }
+            V(pd3dDevice->CreateTexture(width, height, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &OOFTex, NULL));
+            D3DLOCKED_RECT rect_temp;
+            V(OOFTex->LockRect(0, &rect_temp, NULL, 0));
+            memcpy(rect_temp.pBits, c_aOOFBuffer, rect_temp.Pitch*height);
+            OOFTex->UnlockRect(0);
+            // The only difference with the code before:
+            V(m_pPRTEffect->SetTexture("OOFTex2", OOFTex));
+            SAFE_DELETE_ARRAY(c_aOOFBuffer);
+            SAFE_RELEASE(OOFTex);
+
+#endif
         }
 
         SAFE_DELETE(m_aOOFBuffer);
