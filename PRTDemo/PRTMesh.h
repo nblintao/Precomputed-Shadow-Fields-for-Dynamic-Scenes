@@ -11,9 +11,9 @@
 #define USINGTEAPOT
 #define USINGTEXTUREBUFFER
 #define CUBE_EDGELENGTH 16
-//#define SPHERENUM 16
-//#define LATNUM 10
-//#define LNGNUM 10
+//#define SPHERENUM 20
+//#define LATNUM 16
+//#define LNGNUM 16
 #define SPHERENUM 8
 #define LATNUM 4
 #define LNGNUM 4
