@@ -7,7 +7,7 @@
 
 #include "DXUTcamera.h"
 #define SHADOWFIELD
-//#define OUTPUTCUBEMAP
+#define OUTPUTCUBEMAP
 #define USINGTEAPOT
 #define USINGTEXTUREBUFFER
 #define CUBE_EDGELENGTH 16

@@ -44,9 +44,7 @@ float4 aBallInfo[2*BALLNUM];
 float4 MaterialDiffuseColor = { 1.0f, 1.0f, 1.0f, 1.0f };
 
 #define PI 3.14159265359f
-#define TheTR BRDFR
-#define TheTG BRDFG
-#define TheTB BRDFB
+#define TheT BRDF
 
 
 //-----------------------------------------------------------------------------
@@ -335,16 +333,16 @@ float4 GetPRTDiffuse(int iClusterOffset, float4 vPCAWeights[NUM_PCA / 4], float4
     //       w[p][j] = the j'th PCA weight for point p
     //       B[k][j] = the j'th PCA basis vector for cluster k
 
-    float BRDFR[NUM_COEFFS];
-    float BRDFG[NUM_COEFFS];
-    float BRDFB[NUM_COEFFS];
+    float BRDF[3][NUM_COEFFS];
+    //float BRDF[1][NUM_COEFFS];
+    //float BRDF[2][NUM_COEFFS];
 
     float TheBR = 0, TheBG = 0, TheBB = 0;
     
     for (int k = 0; k < NUM_COEFFS ; k++) {
-        BRDFR[k] = aPRTClusterBases[0 * NUM_COEFFS + k];
-        BRDFG[k] = aPRTClusterBases[1 * NUM_COEFFS + k];
-        BRDFB[k] = aPRTClusterBases[2 * NUM_COEFFS + k];
+        BRDF[0][k] = aPRTClusterBases[0 * NUM_COEFFS + k];
+        BRDF[1][k] = aPRTClusterBases[1 * NUM_COEFFS + k];
+        BRDF[2][k] = aPRTClusterBases[2 * NUM_COEFFS + k];
     }
 
     for (int j = 0; j < (NUM_PCA / 4); j++) {
@@ -353,9 +351,9 @@ float4 GetPRTDiffuse(int iClusterOffset, float4 vPCAWeights[NUM_PCA / 4], float4
             int iPCAOffset = (NUM_COEFFS * 3)*(j * 4 + s);
 
             for (int k = 0; k < NUM_COEFFS; k++) {
-                BRDFR[k] += vPCAWeights[j][s] * aPRTClusterBases[iPCAOffset + 0 * NUM_COEFFS + k];
-                BRDFG[k] += vPCAWeights[j][s] * aPRTClusterBases[iPCAOffset + 1 * NUM_COEFFS + k];
-                BRDFB[k] += vPCAWeights[j][s] * aPRTClusterBases[iPCAOffset + 2 * NUM_COEFFS + k];
+                BRDF[0][k] += vPCAWeights[j][s] * aPRTClusterBases[iPCAOffset + 0 * NUM_COEFFS + k];
+                BRDF[1][k] += vPCAWeights[j][s] * aPRTClusterBases[iPCAOffset + 1 * NUM_COEFFS + k];
+                BRDF[2][k] += vPCAWeights[j][s] * aPRTClusterBases[iPCAOffset + 2 * NUM_COEFFS + k];
             }
         }
     }
@@ -414,17 +412,17 @@ float4 GetPRTDiffuse(int iClusterOffset, float4 vPCAWeights[NUM_PCA / 4], float4
 
             //Bp += DoubleProduct(SJ(p),Tp)
             for (int t = 0; t < NUM_COEFFS; t++) {
-                //TheBR += aOOFBuffer[FieldOffset + 0 * NUM_COEFFS + t] * TheTR[t];
-                //TheBG += aOOFBuffer[FieldOffset + 1 * NUM_COEFFS + t] * TheTG[t];
-                //TheBB += aOOFBuffer[FieldOffset + 2 * NUM_COEFFS + t] * TheTB[t];
+                //TheBR += aOOFBuffer[FieldOffset + 0 * NUM_COEFFS + t] * TheT[0][t];
+                //TheBG += aOOFBuffer[FieldOffset + 1 * NUM_COEFFS + t] * TheT[1][t];
+                //TheBB += aOOFBuffer[FieldOffset + 2 * NUM_COEFFS + t] * TheT[2][t];
 
-                TheBR += getOOFBuffer(FieldOffset + 0 * NUM_COEFFS + t) * TheTR[t];
-                TheBG += getOOFBuffer(FieldOffset + 1 * NUM_COEFFS + t) * TheTG[t];
-                TheBB += getOOFBuffer(FieldOffset + 2 * NUM_COEFFS + t) * TheTB[t];
+                TheBR += getOOFBuffer(FieldOffset + 0 * NUM_COEFFS + t) * TheT[0][t];
+                TheBG += getOOFBuffer(FieldOffset + 1 * NUM_COEFFS + t) * TheT[1][t];
+                TheBB += getOOFBuffer(FieldOffset + 2 * NUM_COEFFS + t) * TheT[2][t];
 
-                //TheBR += getMixedOOF(FieldOffset, 0, t) * TheTR[t];
-                //TheBG += getMixedOOF(FieldOffset, 1, t) * TheTG[t];
-                //TheBB += getMixedOOF(FieldOffset, 2, t) * TheTB[t];
+                //TheBR += getMixedOOF(FieldOffset, 0, t) * TheT[0][t];
+                //TheBG += getMixedOOF(FieldOffset, 1, t) * TheT[1][t];
+                //TheBB += getMixedOOF(FieldOffset, 2, t) * TheT[2][t];
             }
         }
         //Else
@@ -440,35 +438,154 @@ float4 GetPRTDiffuse(int iClusterOffset, float4 vPCAWeights[NUM_PCA / 4], float4
             //Tp = TripleProduct(OJ(p), Tp)
             
             //NUM_COEFFS must be 9 here
-            float a[NUM_COEFFS], b[NUM_COEFFS], c[NUM_COEFFS];
+            float a[NUM_COEFFS], b[NUM_COEFFS]/*, c[NUM_COEFFS]*/;
+            for (int colo = 0; colo < 3; colo++) {
+                for (int it = 0; it < NUM_COEFFS; it++) {
+                    a[it] = getOOFBuffer2(FieldOffset + colo * NUM_COEFFS + it);
+                    b[it] = TheT[colo][it];
+                }
+                //c = SH_product_3(a, b).c;
+                //for (int t = 0; t < NUM_COEFFS; t++) {
+                //    TheT[colo][t] = c[t];
+                //}
+#define SH_A a
+#define SH_B b
+#define SH_C TheT[colo]
+                float SH_TA, SH_TB, SH_T;
+                // [0,0]: 0,
+                SH_C[0] = 0.282094792935999980f*SH_A[0] * SH_B[0];
+
+                // [1,1]: 0,6,8,
+                SH_TA = 0.282094791773000010f*SH_A[0] + -0.126156626101000010f*SH_A[6] + -0.218509686119999990f*SH_A[8];
+                SH_TB = 0.282094791773000010f*SH_B[0] + -0.126156626101000010f*SH_B[6] + -0.218509686119999990f*SH_B[8];
+                SH_C[1] = SH_TA*SH_B[1] + SH_TB*SH_A[1];
+                SH_T = SH_A[1] * SH_B[1];
+                SH_C[0] += 0.282094791773000010f*SH_T;
+                SH_C[6] = -0.126156626101000010f*SH_T;
+                SH_C[8] = -0.218509686119999990f*SH_T;
+
+                // [1,2]: 5,
+                SH_TA = 0.218509686118000010f*SH_A[5];
+                SH_TB = 0.218509686118000010f*SH_B[5];
+                SH_C[1] += SH_TA*SH_B[2] + SH_TB*SH_A[2];
+                SH_C[2] = SH_TA*SH_B[1] + SH_TB*SH_A[1];
+                SH_T = SH_A[1] * SH_B[2] + SH_A[2] * SH_B[1];
+                SH_C[5] = 0.218509686118000010f*SH_T;
+
+                // [1,3]: 4,
+                SH_TA = 0.218509686114999990f*SH_A[4];
+                SH_TB = 0.218509686114999990f*SH_B[4];
+                SH_C[1] += SH_TA*SH_B[3] + SH_TB*SH_A[3];
+                SH_C[3] = SH_TA*SH_B[1] + SH_TB*SH_A[1];
+                SH_T = SH_A[1] * SH_B[3] + SH_A[3] * SH_B[1];
+                SH_C[4] = 0.218509686114999990f*SH_T;
+
+                // [2,2]: 0,6,
+                SH_TA = 0.282094795249000000f*SH_A[0] + 0.252313259986999990f*SH_A[6];
+                SH_TB = 0.282094795249000000f*SH_B[0] + 0.252313259986999990f*SH_B[6];
+                SH_C[2] += SH_TA*SH_B[2] + SH_TB*SH_A[2];
+                SH_T = SH_A[2] * SH_B[2];
+                SH_C[0] += 0.282094795249000000f*SH_T;
+                SH_C[6] += 0.252313259986999990f*SH_T;
+
+                // [2,3]: 7,
+                SH_TA = 0.218509686118000010f*SH_A[7];
+                SH_TB = 0.218509686118000010f*SH_B[7];
+                SH_C[2] += SH_TA*SH_B[3] + SH_TB*SH_A[3];
+                SH_C[3] += SH_TA*SH_B[2] + SH_TB*SH_A[2];
+                SH_T = SH_A[2] * SH_B[3] + SH_A[3] * SH_B[2];
+                SH_C[7] = 0.218509686118000010f*SH_T;
+
+                // [3,3]: 0,6,8,
+                SH_TA = 0.282094791773000010f*SH_A[0] + -0.126156626101000010f*SH_A[6] + 0.218509686119999990f*SH_A[8];
+                SH_TB = 0.282094791773000010f*SH_B[0] + -0.126156626101000010f*SH_B[6] + 0.218509686119999990f*SH_B[8];
+                SH_C[3] += SH_TA*SH_B[3] + SH_TB*SH_A[3];
+                SH_T = SH_A[3] * SH_B[3];
+                SH_C[0] += 0.282094791773000010f*SH_T;
+                SH_C[6] += -0.126156626101000010f*SH_T;
+                SH_C[8] += 0.218509686119999990f*SH_T;
+
+                // [4,4]: 0,6,
+                SH_TA = 0.282094791770000020f*SH_A[0] + -0.180223751576000010f*SH_A[6];
+                SH_TB = 0.282094791770000020f*SH_B[0] + -0.180223751576000010f*SH_B[6];
+                SH_C[4] += SH_TA*SH_B[4] + SH_TB*SH_A[4];
+                SH_T = SH_A[4] * SH_B[4];
+                SH_C[0] += 0.282094791770000020f*SH_T;
+                SH_C[6] += -0.180223751576000010f*SH_T;
+
+                // [4,5]: 7,
+                SH_TA = 0.156078347226000000f*SH_A[7];
+                SH_TB = 0.156078347226000000f*SH_B[7];
+                SH_C[4] += SH_TA*SH_B[5] + SH_TB*SH_A[5];
+                SH_C[5] += SH_TA*SH_B[4] + SH_TB*SH_A[4];
+                SH_T = SH_A[4] * SH_B[5] + SH_A[5] * SH_B[4];
+                SH_C[7] += 0.156078347226000000f*SH_T;
+
+                // [5,5]: 0,6,8,
+                SH_TA = 0.282094791773999990f*SH_A[0] + 0.090111875786499998f*SH_A[6] + -0.156078347227999990f*SH_A[8];
+                SH_TB = 0.282094791773999990f*SH_B[0] + 0.090111875786499998f*SH_B[6] + -0.156078347227999990f*SH_B[8];
+                SH_C[5] += SH_TA*SH_B[5] + SH_TB*SH_A[5];
+                SH_T = SH_A[5] * SH_B[5];
+                SH_C[0] += 0.282094791773999990f*SH_T;
+                SH_C[6] += 0.090111875786499998f*SH_T;
+                SH_C[8] += -0.156078347227999990f*SH_T;
+
+                // [6,6]: 0,6,
+                SH_TA = 0.282094797560000000f*SH_A[0];
+                SH_TB = 0.282094797560000000f*SH_B[0];
+                SH_C[6] += SH_TA*SH_B[6] + SH_TB*SH_A[6];
+                SH_T = SH_A[6] * SH_B[6];
+                SH_C[0] += 0.282094797560000000f*SH_T;
+                SH_C[6] += 0.180223764527000010f*SH_T;
+
+                // [7,7]: 0,6,8,
+                SH_TA = 0.282094791773999990f*SH_A[0] + 0.090111875786499998f*SH_A[6] + 0.156078347227999990f*SH_A[8];
+                SH_TB = 0.282094791773999990f*SH_B[0] + 0.090111875786499998f*SH_B[6] + 0.156078347227999990f*SH_B[8];
+                SH_C[7] += SH_TA*SH_B[7] + SH_TB*SH_A[7];
+                SH_T = SH_A[7] * SH_B[7];
+                SH_C[0] += 0.282094791773999990f*SH_T;
+                SH_C[6] += 0.090111875786499998f*SH_T;
+                SH_C[8] += 0.156078347227999990f*SH_T;
+
+                // [8,8]: 0,6,
+                SH_TA = 0.282094791770000020f*SH_A[0] + -0.180223751576000010f*SH_A[6];
+                SH_TB = 0.282094791770000020f*SH_B[0] + -0.180223751576000010f*SH_B[6];
+                SH_C[8] += SH_TA*SH_B[8] + SH_TB*SH_A[8];
+                SH_T = SH_A[8] * SH_B[8];
+                SH_C[0] += 0.282094791770000020f*SH_T;
+                SH_C[6] += -0.180223751576000010f*SH_T;
+
+
+            }
+/*
             // Red
             for (int it = 0; it < NUM_COEFFS; it++) {
                 a[it] = getOOFBuffer2(FieldOffset + 0 * NUM_COEFFS + it);
-                b[it] = TheTR[it];
+                b[it] = TheT[0][it];
             }
             c = SH_product_3(a, b).c;
             for (int t = 0; t < NUM_COEFFS; t++) {
-                TheTR[t] = c[t];
+                TheT[0][t] = c[t];
             }
             // Green
             for (int it = 0; it < NUM_COEFFS; it++) {
                 a[it] = getOOFBuffer2(FieldOffset + 1 * NUM_COEFFS + it);
-                b[it] = TheTG[it];
+                b[it] = TheT[1][it];
             }
             c = SH_product_3(a, b).c;
             for (int t = 0; t < NUM_COEFFS; t++) {
-                TheTG[t] = c[t];
+                TheT[1][t] = c[t];
             }
             // Blue
             for (int it = 0; it < NUM_COEFFS; it++) {
                 a[it] = getOOFBuffer2(FieldOffset + 2 * NUM_COEFFS + it);
-                b[it] = TheTB[it];
+                b[it] = TheT[2][it];
             }
             c = SH_product_3(a, b).c;
             for (int t = 0; t < NUM_COEFFS; t++) {
-                TheTB[t] = c[t];
+                TheT[2][t] = c[t];
             }
-
+*/
         }
 
         
@@ -477,9 +594,9 @@ float4 GetPRTDiffuse(int iClusterOffset, float4 vPCAWeights[NUM_PCA / 4], float4
     //Bp += DoubleProduct(Sd, Tp)
     float4 vDiffuse = float4(TheBR, TheBG, TheBB, 0);
     for (int t = 0; t < NUM_COEFFS; t++) {
-        vDiffuse.r += aEnvSHCoeffs[0 * NUM_COEFFS + t] * TheTR[t];
-        vDiffuse.g += aEnvSHCoeffs[1 * NUM_COEFFS + t] * TheTG[t];
-        vDiffuse.b += aEnvSHCoeffs[2 * NUM_COEFFS + t] * TheTB[t];
+        vDiffuse.r += aEnvSHCoeffs[0 * NUM_COEFFS + t] * TheT[0][t];
+        vDiffuse.g += aEnvSHCoeffs[1 * NUM_COEFFS + t] * TheT[1][t];
+        vDiffuse.b += aEnvSHCoeffs[2 * NUM_COEFFS + t] * TheT[2][t];
     }
     return vDiffuse;
 }
