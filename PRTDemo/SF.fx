@@ -80,6 +80,7 @@ float4 bitShifts = float4(1.0 / (256.0*256.0*256.0), 1.0 / (256.0*256.0), 1.0 / 
 float getFloat(int ppp)
 {
     int n = 2;
+    //int n = LATNUM*LNGNUM*SPHERENUM * 3 * NUM_COEFFS;
     float texOff = 1.0f / n*(0.5f + ppp);
     float4 hello;
     float hi;
@@ -87,7 +88,7 @@ float getFloat(int ppp)
     //float hello = OOFTex.Sample(OOFTexSampler, float2(0.5f, FieldOffset + 0 * NUM_COEFFS + t + 0.5f));
 
     //return tex2Dlod(OOFTexSampler, float4(pos.x / 2, pos.y / 2, 0, 0));
-    hello = tex2Dlod(OOFTexSampler, float4(0.75, 0, 0, 0));
+    hello = tex2Dlod(OOFTexSampler, float4(texOff, 0, 0, 0));
     //return hello;
     hi = dot(hello.argb, bitShifts);
     return hi;
@@ -256,9 +257,9 @@ float GetFieldOffset(float4 pos, int entityid)
 //-----------------------------------------------------------------------------
 float4 GetPRTDiffuse(int iClusterOffset, float4 vPCAWeights[NUM_PCA / 4], float4 pos)
 {
-    return float4(getFloat(0), 0, 0, 0);
+    return tex2Dlod(OOFTexSampler, float4(0.75, 0.25, 0, 0));
+    //return float4(getFloat(0),0,0,0);
 
-    //return float4(hi / 255, 0, 0, 0);
     // With compressed PRT, a single diffuse channel is caluated by:
     //       R[p] = (M[k] dot L') + sum( w[p][j] * (B[k][j] dot L');
     // where the sum runs j between 0 and # of PCA vectors
