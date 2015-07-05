@@ -20,13 +20,16 @@ texture OOFTex2;
 
 #define NUM_CHANNELS	3
 
-#define BALLNUM 3
-//#define SPHERENUM 20
-//#define LATNUM 16
-//#define LNGNUM 16
-#define SPHERENUM 8
-#define LATNUM 4
-#define LNGNUM 4
+#define BALLNUM 2
+#define SPHERENUM 20
+#define LATNUM 16
+#define LNGNUM 16
+//#define SPHERENUM 16
+//#define LATNUM 8
+//#define LNGNUM 8
+//#define SPHERENUM 8
+//#define LATNUM 4
+//#define LNGNUM 4
 #define DIST_NEAR 0.2f
 #define DIST_FAR 8.0f
 #define TEXWIDTH 128
@@ -44,7 +47,10 @@ float4 aBallInfo[2*BALLNUM];
 float4 MaterialDiffuseColor = { 1.0f, 1.0f, 1.0f, 1.0f };
 
 #define PI 3.14159265359f
-#define TheT BRDF
+
+#define SH_A a
+#define SH_B b
+#define SH_C TheT[colo]
 
 
 //-----------------------------------------------------------------------------
@@ -333,16 +339,17 @@ float4 GetPRTDiffuse(int iClusterOffset, float4 vPCAWeights[NUM_PCA / 4], float4
     //       w[p][j] = the j'th PCA weight for point p
     //       B[k][j] = the j'th PCA basis vector for cluster k
 
-    float BRDF[3][NUM_COEFFS];
-    //float BRDF[1][NUM_COEFFS];
-    //float BRDF[2][NUM_COEFFS];
+    float TheT[3][NUM_COEFFS];
+    //float TheT[1][NUM_COEFFS];
+    //float TheT[2][NUM_COEFFS];
 
-    float TheBR = 0, TheBG = 0, TheBB = 0;
+    //float TheBR = 0, TheBG = 0, TheBB = 0;
+    float4 TheB = float4(0, 0, 0, 0);
     
     for (int k = 0; k < NUM_COEFFS ; k++) {
-        BRDF[0][k] = aPRTClusterBases[0 * NUM_COEFFS + k];
-        BRDF[1][k] = aPRTClusterBases[1 * NUM_COEFFS + k];
-        BRDF[2][k] = aPRTClusterBases[2 * NUM_COEFFS + k];
+        TheT[0][k] = aPRTClusterBases[0 * NUM_COEFFS + k];
+        TheT[1][k] = aPRTClusterBases[1 * NUM_COEFFS + k];
+        TheT[2][k] = aPRTClusterBases[2 * NUM_COEFFS + k];
     }
 
     for (int j = 0; j < (NUM_PCA / 4); j++) {
@@ -351,14 +358,14 @@ float4 GetPRTDiffuse(int iClusterOffset, float4 vPCAWeights[NUM_PCA / 4], float4
             int iPCAOffset = (NUM_COEFFS * 3)*(j * 4 + s);
 
             for (int k = 0; k < NUM_COEFFS; k++) {
-                BRDF[0][k] += vPCAWeights[j][s] * aPRTClusterBases[iPCAOffset + 0 * NUM_COEFFS + k];
-                BRDF[1][k] += vPCAWeights[j][s] * aPRTClusterBases[iPCAOffset + 1 * NUM_COEFFS + k];
-                BRDF[2][k] += vPCAWeights[j][s] * aPRTClusterBases[iPCAOffset + 2 * NUM_COEFFS + k];
+                TheT[0][k] += vPCAWeights[j][s] * aPRTClusterBases[iPCAOffset + 0 * NUM_COEFFS + k];
+                TheT[1][k] += vPCAWeights[j][s] * aPRTClusterBases[iPCAOffset + 1 * NUM_COEFFS + k];
+                TheT[2][k] += vPCAWeights[j][s] * aPRTClusterBases[iPCAOffset + 2 * NUM_COEFFS + k];
             }
         }
     }
 
-    // BRDF is finished. TheT is equal to BRDF.
+    // TheT is finished. TheT is equal to BRDF.
     // Tp = TripleProduct(Op, ~rho)
 
     //TODO
@@ -416,9 +423,9 @@ float4 GetPRTDiffuse(int iClusterOffset, float4 vPCAWeights[NUM_PCA / 4], float4
                 //TheBG += aOOFBuffer[FieldOffset + 1 * NUM_COEFFS + t] * TheT[1][t];
                 //TheBB += aOOFBuffer[FieldOffset + 2 * NUM_COEFFS + t] * TheT[2][t];
 
-                TheBR += getOOFBuffer(FieldOffset + 0 * NUM_COEFFS + t) * TheT[0][t];
-                TheBG += getOOFBuffer(FieldOffset + 1 * NUM_COEFFS + t) * TheT[1][t];
-                TheBB += getOOFBuffer(FieldOffset + 2 * NUM_COEFFS + t) * TheT[2][t];
+                TheB[0] += getOOFBuffer(FieldOffset + 0 * NUM_COEFFS + t) * TheT[0][t];
+                TheB[1] += getOOFBuffer(FieldOffset + 1 * NUM_COEFFS + t) * TheT[1][t];
+                TheB[2] += getOOFBuffer(FieldOffset + 2 * NUM_COEFFS + t) * TheT[2][t];
 
                 //TheBR += getMixedOOF(FieldOffset, 0, t) * TheT[0][t];
                 //TheBG += getMixedOOF(FieldOffset, 1, t) * TheT[1][t];
@@ -448,9 +455,7 @@ float4 GetPRTDiffuse(int iClusterOffset, float4 vPCAWeights[NUM_PCA / 4], float4
                 //for (int t = 0; t < NUM_COEFFS; t++) {
                 //    TheT[colo][t] = c[t];
                 //}
-#define SH_A a
-#define SH_B b
-#define SH_C TheT[colo]
+
                 float SH_TA, SH_TB, SH_T;
                 // [0,0]: 0,
                 SH_C[0] = 0.282094792935999980f*SH_A[0] * SH_B[0];
@@ -592,7 +597,8 @@ float4 GetPRTDiffuse(int iClusterOffset, float4 vPCAWeights[NUM_PCA / 4], float4
     }
 
     //Bp += DoubleProduct(Sd, Tp)
-    float4 vDiffuse = float4(TheBR, TheBG, TheBB, 0);
+    //float4 vDiffuse = float4(TheB[0], TheB[1], TheB[2], 0);
+    float4 vDiffuse = TheB;
     for (int t = 0; t < NUM_COEFFS; t++) {
         vDiffuse.r += aEnvSHCoeffs[0 * NUM_COEFFS + t] * TheT[0][t];
         vDiffuse.g += aEnvSHCoeffs[1 * NUM_COEFFS + t] * TheT[1][t];

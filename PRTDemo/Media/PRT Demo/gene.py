@@ -2,7 +2,7 @@ fp = open("cube_on_plane.x","w")
 
 
 L = 5.0
-N = 30
+N = 80
 
 fp.write('''xof 0302txt 0064
 

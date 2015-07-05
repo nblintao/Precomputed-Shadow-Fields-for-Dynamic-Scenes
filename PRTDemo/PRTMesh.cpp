@@ -745,6 +745,25 @@ HRESULT CPRTMesh::LoadMesh( IDirect3DDevice9* pd3dDevice, WCHAR* strMeshFileName
         0 //通常设置成0(或NULL)  
         );
 
+    //D3DXCreateTorus(
+    //    pd3dDevice, //D3D绘制对象  
+    //    0.2f, //圆环的內圈半径  
+    //    1.0f, //圆环的外圈半径  
+    //    20, //外圈有几个面  
+    //    20, //內圈和外圈间有几个面(同心圆)  
+    //    &meshTeapot,
+    //    0 //通常设置成0(或NULL)  
+    //    );
+    //D3DXCreateBox(
+    //    pd3dDevice, //D3D绘制对象  
+    //    4.0f, //宽度  
+    //    1.0f, //高度  
+    //    1.0f, //深度  
+    //    &meshTeapot,//对应COM对象  
+    //    0 //指向ID3DXBuffer，存放相邻平面的信息，通常设置成0(或NULL)  
+    //    );
+
+
     SAFE_RELEASE(meshSphere);
     D3DXCreateSphere(
         pd3dDevice, //D3D绘制对象  
