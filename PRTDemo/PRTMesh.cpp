@@ -421,6 +421,25 @@ VOID SetupLights(IDirect3DDevice9* g_pd3dDevice, char color = 'Y')
 //
 //}
 
+
+D3DCOLOR packetFloatToColor(float value)
+{
+    UINT a, r, g, b;
+    value *= 256;
+    b = (int)value;
+    value -= b;
+    value *= 256;
+    g = (int)value;
+    value -= g;
+    value *= 256;
+    r = (int)value;
+    value -= r;
+    value *= 256;
+    a = (int)value;
+    return D3DCOLOR_ARGB(a, r, g, b);
+}
+
+
 // The code of Environment Mapping is based on http://www.ownself.org/blog/2010/huan-jing-ying-she-environment-mapping.html
 HRESULT CPRTMesh::GetCubeMap(IDirect3DDevice9* pd3dDevice)
 {
@@ -560,63 +579,38 @@ HRESULT CPRTMesh::GetCubeMap(IDirect3DDevice9* pd3dDevice)
             V(m_pPRTEffect->SetFloatArray("aOOFBuffer", (float*)m_aOOFBuffer, LATNUM*LNGNUM*SPHERENUM * 3 * m_dwPRTOrder*m_dwPRTOrder));
 #endif
 
-/*            float value = 0.314;
-            
-            UINT a, r, g, b;
-            value *= 256;
-            b = (int)value;
-            value -= b;
-            value *= 256;
-            g = (int)value;
-            value -= g;
-            value *= 256;
-            r = (int)value;
-            value -= r;
-            value *= 256;
-            a = (int)value;
-
-            D3DCOLOR col = D3DCOLOR_ARGB(0, 255, 255, 0);
-            D3DCOLOR col2 = D3DCOLOR_ARGB(0, 255, 0, 0);
-            //D3DCOLOR col2 = D3DCOLOR_ARGB(0, 255, 0, 0);
-            //D3DCOLOR col3 = D3DCOLOR_ARGB(a, r, g, b);
-            D3DCOLOR col3 = D3DCOLOR_ARGB(0, 0, 255, 0);
-            D3DCOLOR col4 = D3DCOLOR_ARGB(0, 0, 0, 255);
-            D3DCOLOR p[4] = { col, col2, col3, col4 };
-            //D3DCOLOR p[3] = { col2, col3, col4 };
-            //D3DCOLOR p[2] = { col2, col3 };
-            UINT width = 2;
-            UINT height = 2;
-            V(pd3dDevice->CreateTexture(width, height, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &OOFTex, NULL));
-            D3DLOCKED_RECT rect_temp;
-            V(OOFTex->LockRect(0, &rect_temp, NULL, 0));
-            memcpy(rect_temp.pBits, p, rect_temp.Pitch*height);
-            OOFTex->UnlockRect(0);
-      */      
-            
-#define TEXWIDTH 128;
-            UINT a, r, g, b;
-            UINT OOFCount = LATNUM*LNGNUM*SPHERENUM * 3 * m_dwPRTOrder*m_dwPRTOrder;
+            //D3DCOLOR p[6] = { 
+            //    packetFloatToColor(0.314),
+            //    packetFloatToColor(0.6), 
+            //    packetFloatToColor(0.8), 
+            //    packetFloatToColor(0.1), 
+            //    packetFloatToColor(0.9), 
+            //    packetFloatToColor(0.44) 
+            //};
+            //UINT width = 3;
+            //UINT height = 2;
+            //V(pd3dDevice->CreateTexture(width, height, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &OOFTex, NULL));
+            //D3DLOCKED_RECT rect_temp;
+            //V(OOFTex->LockRect(0, &rect_temp, NULL, 0));
+            //memcpy(rect_temp.pBits, p, rect_temp.Pitch*height);
+            //OOFTex->UnlockRect(0);
+      
+            //*HAHA
+#define TEXWIDTH 128
+//#define TEXWIDTH 3
+            //UINT OOFCount = LATNUM*LNGNUM*SPHERENUM * 3 * m_dwPRTOrder*m_dwPRTOrder;
+            UINT OOFCount = 8;
             UINT width = TEXWIDTH;
             UINT height = ceil(1.0f*OOFCount/width);
+            float testm_aOOFBuffer[8] = { 0.314, 0.6, 0.8, 0.1, 0.9, 0.44};
             c_aOOFBuffer = new D3DCOLOR[width*height];
-
-            //memset(c_aOOFBuffer, 0, width*height*sizeof(D3DCOLOR));
+            
             for (UINT i = 0; i < OOFCount; i++) {
-                float value = m_aOOFBuffer[i];
-                value = (value + 2) / 4;
+                float value = testm_aOOFBuffer[i];
+                //float value = m_aOOFBuffer[i];
+                value = (value + 2.0f) / 4.0f;
                 //m_aOOFBuffer[i] = value;
-                value *= 256;
-                b = (int)value;
-                value -= b;
-                value *= 256;
-                g = (int)value;
-                value -= g;
-                value *= 256;
-                r = (int)value;
-                value -= r;
-                value *= 256;
-                a = (int)value;
-                c_aOOFBuffer[i] = D3DCOLOR_ARGB(a, r, g, b);
+                c_aOOFBuffer[i] = packetFloatToColor(value);
             }          
 
 
@@ -636,6 +630,8 @@ HRESULT CPRTMesh::GetCubeMap(IDirect3DDevice9* pd3dDevice)
             //V(pd3dDevice->CreateTexture(width, height, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &OOFTex, NULL));
             V(pd3dDevice->CreateTexture(width, height, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &OOFTex, NULL));
             D3DLOCKED_RECT rect_temp;
+
+
             //OOFTex->LockRect(0, &rect_temp, NULL, D3DLOCK_DISCARD);
             V(OOFTex->LockRect(0, &rect_temp, NULL, 0));
             //memset(lockrect.pBits, 0x00, lockrect.Pitch*height);
@@ -662,7 +658,7 @@ HRESULT CPRTMesh::GetCubeMap(IDirect3DDevice9* pd3dDevice)
 
             //OOFTexHandle = m_pPRTEffect->GetParameterByName(0, "OOFTex");
             //m_pPRTEffect->SetTexture(OOFTexHandle, OOFTex);
-
+//HAHA*/
             V(m_pPRTEffect->SetTexture("OOFTex", OOFTex));
 
             SAFE_DELETE_ARRAY(c_aOOFBuffer);

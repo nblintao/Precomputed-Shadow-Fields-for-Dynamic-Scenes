@@ -21,8 +21,8 @@ texture OOFTex;
 
 #define BALLNUM 3
 #define SPHERENUM 8
-#define LATNUM 5
-#define LNGNUM 5
+#define LATNUM 4
+#define LNGNUM 4
 #define DIST_NEAR 0.2f
 #define DIST_FAR 8.0f
 
@@ -42,7 +42,7 @@ float4 MaterialDiffuseColor = { 1.0f, 1.0f, 1.0f, 1.0f };
 #define TheTR BRDFR
 #define TheTG BRDFG
 #define TheTB BRDFB
-#define TEXWIDTH 128
+
 
 //-----------------------------------------------------------------------------
 sampler AlbedoSampler = sampler_state
@@ -78,10 +78,15 @@ struct SHProduct_OUTPUT
 
 float4 bitShifts = float4(1.0 / (256.0*256.0*256.0), 1.0 / (256.0*256.0), 1.0 / 256.0, 1);
 
+#define TEXWIDTH 128
+//#define TEXWIDTH 3
+
 float getFloat(int ppp)
 {
     int nx = TEXWIDTH;
-    int ny = LATNUM*LNGNUM*SPHERENUM * 3 * NUM_COEFFS/nx;
+    //int n = LATNUM*LNGNUM*SPHERENUM * 3 * NUM_COEFFS;
+    int n = 8;
+    int ny = ceil(1.0f*n/nx);
     int x = ppp%TEXWIDTH;
     int y = ppp / TEXWIDTH;
     float texOffX = 1.0f / nx*(0.5f + x);
@@ -96,7 +101,7 @@ float getFloat(int ppp)
     //return hello;
     hi = dot(hello.argb, bitShifts);
     //return hi;
-    return hi * 4 - 2;
+    return hi * 4.0f - 2.0f;
 }
 
 // NUM_COEFFS must be 9 here
@@ -262,6 +267,7 @@ float GetFieldOffset(float4 pos, int entityid)
 //-----------------------------------------------------------------------------
 float4 GetPRTDiffuse(int iClusterOffset, float4 vPCAWeights[NUM_PCA / 4], float4 pos)
 {
+    return float4(getFloat(0),getFloat(1),getFloat(3),0);
     //return tex2Dlod(OOFTexSampler, float4(0.75, 0.25, 0, 0));
     //return float4(getFloat(0),0,0,0);
 
