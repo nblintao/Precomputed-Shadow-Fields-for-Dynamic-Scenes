@@ -75,6 +75,24 @@ struct SHProduct_OUTPUT
     float c[NUM_COEFFS];
 };
 
+float4 bitShifts = float4(1.0 / (256.0*256.0*256.0), 1.0 / (256.0*256.0), 1.0 / 256.0, 1);
+
+float getFloat(int ppp)
+{
+    int n = 2;
+    float texOff = 1.0f / n*(0.5f + ppp);
+    float4 hello;
+    float hi;
+
+    //float hello = OOFTex.Sample(OOFTexSampler, float2(0.5f, FieldOffset + 0 * NUM_COEFFS + t + 0.5f));
+
+    //return tex2Dlod(OOFTexSampler, float4(pos.x / 2, pos.y / 2, 0, 0));
+    hello = tex2Dlod(OOFTexSampler, float4(0.75, 0, 0, 0));
+    //return hello;
+    hi = dot(hello.argb, bitShifts);
+    return hi;
+}
+
 // NUM_COEFFS must be 9 here
 //Based on http://research.microsoft.com/en-us/um/people/johnsny/#shtriple
 SHProduct_OUTPUT SH_product_3(float a[NUM_COEFFS], float b[NUM_COEFFS])
@@ -238,6 +256,9 @@ float GetFieldOffset(float4 pos, int entityid)
 //-----------------------------------------------------------------------------
 float4 GetPRTDiffuse(int iClusterOffset, float4 vPCAWeights[NUM_PCA / 4], float4 pos)
 {
+    return float4(getFloat(0), 0, 0, 0);
+
+    //return float4(hi / 255, 0, 0, 0);
     // With compressed PRT, a single diffuse channel is caluated by:
     //       R[p] = (M[k] dot L') + sum( w[p][j] * (B[k][j] dot L');
     // where the sum runs j between 0 and # of PCA vectors
@@ -328,16 +349,31 @@ float4 GetPRTDiffuse(int iClusterOffset, float4 vPCAWeights[NUM_PCA / 4], float4
                 //TheBR += aOOFBuffer[FieldOffset + 0 * NUM_COEFFS + t] * TheTR[t];
                 //TheBG += aOOFBuffer[FieldOffset + 1 * NUM_COEFFS + t] * TheTG[t];
                 //TheBB += aOOFBuffer[FieldOffset + 2 * NUM_COEFFS + t] * TheTB[t];
-                int ppp = FieldOffset + 0 * NUM_COEFFS + t;
-                float4 hello = tex2Dlod(OOFTexSampler, float4(0.5f, 0.5f + floor(ppp / 4), 0, 0));
-                    //float hello = OOFTex.Sample(OOFTexSampler, float2(0.5f, FieldOffset + 0 * NUM_COEFFS + t + 0.5f));
-                    TheBR += hello[ppp % 4] * TheTR[t];
-                ppp = FieldOffset + 1 * NUM_COEFFS + t;
-                hello = tex2Dlod(OOFTexSampler, float4(0.5f, 0.5f + floor(ppp / 4), 0, 0));
-                             TheBG += hello[ppp % 4] * TheTG[t];
-                 ppp = FieldOffset + 2 * NUM_COEFFS + t;
-                hello = tex2Dlod(OOFTexSampler, float4(0.5f, 0.5f + floor(ppp / 4), 0, 0));           
-                             TheBB += hello[ppp % 4] * TheTB[t];
+                //int ppp;
+                //float4 hello;
+                float hi;
+
+                //float hello = OOFTex.Sample(OOFTexSampler, float2(0.5f, FieldOffset + 0 * NUM_COEFFS + t + 0.5f));
+
+                const float4 bitShifts = float4(1.0 / (256.0*256.0*256.0), 1.0 / (256.0*256.0), 1.0 / 256.0, 1);
+                
+                //ppp = FieldOffset + 0 * NUM_COEFFS + t;
+                //hello = tex2Dlod(OOFTexSampler, float4(0.5f, 0.5f + ppp, 0, 0));
+                //hi = dot(hello.xyzw, bitShifts);
+                hi = getFloat(FieldOffset + 0 * NUM_COEFFS + t);
+                TheBR += hi * TheTR[t];
+                                
+                //ppp = FieldOffset + 1 * NUM_COEFFS + t;
+                //hello = tex2Dlod(OOFTexSampler, float4(0.5f, 0.5f + ppp, 0, 0));
+                //hi = dot(hello.xyzw, bitShifts);;
+                hi = getFloat(FieldOffset + 1 * NUM_COEFFS + t);
+                TheBG += hi * TheTG[t];
+                
+                //ppp = FieldOffset + 2 * NUM_COEFFS + t;
+                //hello = tex2Dlod(OOFTexSampler, float4(0.5f, 0.5f + ppp, 0, 0));
+                //hi = dot(hello.xyzw, bitShifts);;
+                hi = getFloat(FieldOffset + 2 * NUM_COEFFS + t);
+                TheBB += hi * TheTB[t];
             }
         }
         //Else

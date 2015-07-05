@@ -211,6 +211,7 @@ protected:
     // a mean PCA vector which is described with 4 floats (and hence the +4).
     float* m_aPRTConstants;
     FLOAT *m_aOOFBuffer;
+    D3DCOLOR *c_aOOFBuffer;
 
     ///////////
     // LDPRT
