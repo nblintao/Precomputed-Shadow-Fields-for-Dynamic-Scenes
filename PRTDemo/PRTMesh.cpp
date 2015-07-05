@@ -197,7 +197,7 @@ HRESULT AttribSortMesh( ID3DXMesh** ppInOutMesh )
     return S_OK;
 }
 
-VOID SetupLights(IDirect3DDevice9* g_pd3dDevice, char color = 'Y')
+VOID SetupLights(IDirect3DDevice9* g_pd3dDevice, char color = 'Y',int p=0)
 {
     // Set up a material. The material here just has the diffuse and ambient
     // colors set to yellow. Note that only one material can be used at a time.
@@ -225,28 +225,34 @@ VOID SetupLights(IDirect3DDevice9* g_pd3dDevice, char color = 'Y')
     }
     g_pd3dDevice->SetMaterial(&mtrl);
 
-    // Set up a white, directional light, with an oscillating direction.
-    // Note that many lights may be active at a time (but each one slows down
-    // the rendering of our scene). However, here we are just using one. Also,
-    // we need to set the D3DRS_LIGHTING renderstate to enable lighting
-    //D3DXVECTOR3 vecDir;
-    //D3DLIGHT9 light;
-    //ZeroMemory(&light, sizeof(D3DLIGHT9));
-    //light.Type = D3DLIGHT_DIRECTIONAL;
-    //light.Diffuse.r = 1.0f;
-    //light.Diffuse.g = 1.0f;
-    //light.Diffuse.b = 1.0f;
-    //vecDir = D3DXVECTOR3(cosf(timeGetTime() / 350.0f),
-    //    1.0f,
-    //    sinf(timeGetTime() / 350.0f));
-    //D3DXVec3Normalize((D3DXVECTOR3*)&light.Direction, &vecDir);
-    //light.Range = 1000.0f;
-    //g_pd3dDevice->SetLight(0, &light);
-    //g_pd3dDevice->LightEnable(0, TRUE);
-    //g_pd3dDevice->SetRenderState(D3DRS_LIGHTING, TRUE);
+    if (p) {
+        // Set up a white, directional light, with an oscillating direction.
+        // Note that many lights may be active at a time (but each one slows down
+        // the rendering of our scene). However, here we are just using one. Also,
+        // we need to set the D3DRS_LIGHTING renderstate to enable lighting
+        D3DXVECTOR3 vecDir = { 0, -1, 0 };
+        D3DLIGHT9 light;
+        ZeroMemory(&light, sizeof(D3DLIGHT9));
+        light.Type = D3DLIGHT_DIRECTIONAL;
+        light.Diffuse.r = 1.0f;
+        light.Diffuse.g = 1.0f;
+        light.Diffuse.b = 1.0f;
+        //vecDir = D3DXVECTOR3(cosf(timeGetTime() / 350.0f),
+        //    1.0f,
+        //    sinf(timeGetTime() / 350.0f));
+        D3DXVec3Normalize((D3DXVECTOR3*)&light.Direction, &vecDir);
+        light.Range = 1000.0f;
+        g_pd3dDevice->SetLight(0, &light);
+        g_pd3dDevice->LightEnable(0, TRUE);
+        g_pd3dDevice->SetRenderState(D3DRS_LIGHTING, TRUE);
 
-    // Finally, turn on some ambient light.
-    g_pd3dDevice->SetRenderState(D3DRS_AMBIENT, D3DCOLOR_XRGB(255,255,255));
+        // Finally, turn on some ambient light.
+        g_pd3dDevice->SetRenderState(D3DRS_AMBIENT, D3DCOLOR_XRGB(100, 100, 100));
+    }
+    else{
+        g_pd3dDevice->SetRenderState(D3DRS_AMBIENT, D3DCOLOR_XRGB(255, 255, 255));
+
+    }
 }
 
 // Another way to render the cube map
@@ -1544,12 +1550,13 @@ void CPRTMesh::RenderWithPRT(IDirect3DDevice9* pd3dDevice, D3DXMATRIX* pmWorldVi
     for (INT i = 0; i < ballNum; i++) {
         if (i == selectBall) {
             SetupLights(pd3dDevice, 'B');
+            //SetupLights(pd3dDevice, 'X');
         }
         else if (ballList[i]->type == LIGHT) {
             SetupLights(pd3dDevice, 'Y');
         }
         else if (ballList[i]->type == OBJECT) {
-            SetupLights(pd3dDevice, 'R');
+            SetupLights(pd3dDevice, 'R',1);
         }
         D3DXMATRIX m1,m2;
         Ball* ball = ballList[i];
