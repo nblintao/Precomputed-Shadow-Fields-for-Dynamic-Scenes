@@ -21,9 +21,12 @@ texture OOFTex2;
 #define NUM_CHANNELS	3
 
 #define BALLNUM 3
-#define SPHERENUM 16
-#define LATNUM 10
-#define LNGNUM 10
+//#define SPHERENUM 16
+//#define LATNUM 10
+//#define LNGNUM 10
+#define SPHERENUM 8
+#define LATNUM 4
+#define LNGNUM 4
 #define DIST_NEAR 0.2f
 #define DIST_FAR 8.0f
 #define TEXWIDTH 128
@@ -84,6 +87,13 @@ struct VS_OUTPUT
 struct SHProduct_OUTPUT
 {
     float c[NUM_COEFFS];
+};
+
+struct twoOffsets
+{
+    int offset1;
+    int offset2;
+    float ratio;
 };
 
 float4 bitShifts = float4(1.0 / (256.0*256.0*256.0), 1.0 / (256.0*256.0), 1.0 / 256.0, 1);
@@ -249,13 +259,22 @@ SHProduct_OUTPUT SH_product_3(float a[NUM_COEFFS], float b[NUM_COEFFS])
 }
 
 
-float GetFieldOffset(float4 pos, int entityid)
+twoOffsets GetFieldOffset(float4 pos, int entityid)
 {
+    twoOffsets FieldOffset;
+
     float4 relativePos = pos - aBallInfo[2 * entityid + 1];
     float ballRadius = aBallInfo[2 * entityid + 0][0];
 
-    int sphereid = (length(relativePos) / ballRadius - DIST_NEAR) / ((DIST_FAR - DIST_NEAR) / (SPHERENUM - 1));
+    float sphereid = (length(relativePos) / ballRadius - DIST_NEAR) / (DIST_FAR - DIST_NEAR) * (SPHERENUM - 1);
     sphereid = clamp(sphereid, 0, SPHERENUM - 1);
+    int sphereid1 = floor(sphereid);
+    int sphereid2 = ceil(sphereid);
+    FieldOffset.ratio = 0.5;
+    if (sphereid1 != sphereid2) {
+        FieldOffset.ratio = 1.0f*shereid2 - sphereid;
+    }
+
     //if (sphereid < 0)
     //    sphereid = 0;
     //else if (sphereid >= SPHERENUM)
@@ -284,11 +303,19 @@ float GetFieldOffset(float4 pos, int entityid)
     //int lngid = 2;
     //int sphereid = 1;
 
-    return ((latid*LNGNUM + lngid)*SPHERENUM + sphereid) * 3 * NUM_COEFFS;
+    FieldOffset.offset1 = ((latid*LNGNUM + lngid)*SPHERENUM + sphereid1) * 3 * NUM_COEFFS;
+    FieldOffset.offset2 = ((latid*LNGNUM + lngid)*SPHERENUM + sphereid2) * 3 * NUM_COEFFS;
+    return FieldOffset;
     //return float4(1.0*(envOffset)/ (LATNUM*LNGNUM*SPHERENUM * 3 * NUM_COEFFS / 4)/2+0.5f, 0, 0, 0);
 }
 
-
+float getMixedOOF(twoOffsets FieldOffset, int chanel, int t)
+{
+    float mix = 0;
+    mix += getOOFBuffer(FieldOffset.offset1 + chanel * NUM_COEFFS + t)*FieldOffset.ratio;
+    mix += getOOFBuffer(FieldOffset.offset2 + chanel * NUM_COEFFS + t)*(1 - FieldOffset.ratio);
+    return mix ;
+}
 //-----------------------------------------------------------------------------
 float4 GetPRTDiffuse(int iClusterOffset, float4 vPCAWeights[NUM_PCA / 4], float4 pos)
 {
@@ -370,7 +397,7 @@ float4 GetPRTDiffuse(int iClusterOffset, float4 vPCAWeights[NUM_PCA / 4], float4
 
         //query SRF array to get its SRF SJ(p)
         //query OOF array to get its OOF OJ(p)
-        float FieldOffset = GetFieldOffset(pos, entityid);
+        twoOffsets FieldOffset = GetFieldOffset(pos, entityid);
 
         //If J is a light source
         if (aBallInfo[2 * entityid + 0][1] < 2.0f) {
@@ -387,52 +414,56 @@ float4 GetPRTDiffuse(int iClusterOffset, float4 vPCAWeights[NUM_PCA / 4], float4
                 //TheBG += aOOFBuffer[FieldOffset + 1 * NUM_COEFFS + t] * TheTG[t];
                 //TheBB += aOOFBuffer[FieldOffset + 2 * NUM_COEFFS + t] * TheTB[t];
 
-                TheBR += getOOFBuffer(FieldOffset + 0 * NUM_COEFFS + t) * TheTR[t];
-                TheBG += getOOFBuffer(FieldOffset + 1 * NUM_COEFFS + t) * TheTG[t];
-                TheBB += getOOFBuffer(FieldOffset + 2 * NUM_COEFFS + t) * TheTB[t];
+                //TheBR += getOOFBuffer(FieldOffset + 0 * NUM_COEFFS + t) * TheTR[t];
+                //TheBG += getOOFBuffer(FieldOffset + 1 * NUM_COEFFS + t) * TheTG[t];
+                //TheBB += getOOFBuffer(FieldOffset + 2 * NUM_COEFFS + t) * TheTB[t];
+
+                TheBR += getMixedOOF(FieldOffset, 0, t) * TheTR[t];
+                TheBG += getMixedOOF(FieldOffset, 1, t) * TheTG[t];
+                TheBB += getMixedOOF(FieldOffset, 2, t) * TheTB[t];
             }
         }
         //Else
         else {
 
-            //query OOF array to get its OOF OJ(p)
-            //FieldOffset can be used here
+            ////query OOF array to get its OOF OJ(p)
+            ////FieldOffset can be used here
 
-            //TODO
-            //rotate OJ(p) to align with global coordinate frame
+            ////TODO
+            ////rotate OJ(p) to align with global coordinate frame
 
-            //TODO
-            //Tp = TripleProduct(OJ(p), Tp)
-            
-            //NUM_COEFFS must be 9 here
-            float a[NUM_COEFFS], b[NUM_COEFFS], c[NUM_COEFFS];
-            // Red
-            for (int it = 0; it < NUM_COEFFS; it++) {
-                a[it] = getOOFBuffer2(FieldOffset + 0 * NUM_COEFFS + it);
-                b[it] = TheTR[it];
-            }
-            c = SH_product_3(a, b).c;
-            for (int t = 0; t < NUM_COEFFS; t++) {
-                TheTR[t] = c[t];
-            }
-            // Green
-            for (int it = 0; it < NUM_COEFFS; it++) {
-                a[it] = getOOFBuffer2(FieldOffset + 1 * NUM_COEFFS + it);
-                b[it] = TheTG[it];
-            }
-            c = SH_product_3(a, b).c;
-            for (int t = 0; t < NUM_COEFFS; t++) {
-                TheTG[t] = c[t];
-            }
-            // Blue
-            for (int it = 0; it < NUM_COEFFS; it++) {
-                a[it] = getOOFBuffer2(FieldOffset + 2 * NUM_COEFFS + it);
-                b[it] = TheTB[it];
-            }
-            c = SH_product_3(a, b).c;
-            for (int t = 0; t < NUM_COEFFS; t++) {
-                TheTB[t] = c[t];
-            }
+            ////TODO
+            ////Tp = TripleProduct(OJ(p), Tp)
+            //
+            ////NUM_COEFFS must be 9 here
+            //float a[NUM_COEFFS], b[NUM_COEFFS], c[NUM_COEFFS];
+            //// Red
+            //for (int it = 0; it < NUM_COEFFS; it++) {
+            //    a[it] = getOOFBuffer2(FieldOffset + 0 * NUM_COEFFS + it);
+            //    b[it] = TheTR[it];
+            //}
+            //c = SH_product_3(a, b).c;
+            //for (int t = 0; t < NUM_COEFFS; t++) {
+            //    TheTR[t] = c[t];
+            //}
+            //// Green
+            //for (int it = 0; it < NUM_COEFFS; it++) {
+            //    a[it] = getOOFBuffer2(FieldOffset + 1 * NUM_COEFFS + it);
+            //    b[it] = TheTG[it];
+            //}
+            //c = SH_product_3(a, b).c;
+            //for (int t = 0; t < NUM_COEFFS; t++) {
+            //    TheTG[t] = c[t];
+            //}
+            //// Blue
+            //for (int it = 0; it < NUM_COEFFS; it++) {
+            //    a[it] = getOOFBuffer2(FieldOffset + 2 * NUM_COEFFS + it);
+            //    b[it] = TheTB[it];
+            //}
+            //c = SH_product_3(a, b).c;
+            //for (int t = 0; t < NUM_COEFFS; t++) {
+            //    TheTB[t] = c[t];
+            //}
 
         }
 
